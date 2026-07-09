@@ -19,7 +19,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential ccache git libncurses6 openjdk-17-jdk-headless unzip zip wget zlib1g-dev autoconf automake libtool pkg-config
+          sudo apt-get install -y build-essential ccache git libncurses6 openjdk-17-jdk-headless unzip zip wget zlib1g-dev autoconf automake libtool libtool-bin pkg-config gettext
 
       - name: Install buildozer
         run: pip install buildozer==1.5.0 cython==0.29.36
@@ -60,6 +60,7 @@ jobs:
           export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
           export ANDROID_SDK_ROOT="$ANDROIDSDK"
           export PATH="$ANDROIDSDK/cmdline-tools/latest/bin:$ANDROIDSDK/platform-tools:$PATH"
+          export ACLOCAL_PATH="/usr/share/aclocal"
           yes | sdkmanager --licenses
           buildozer -v android debug 2>&1 | tee build.log
           echo "=== Last 300 lines of build log ==="
