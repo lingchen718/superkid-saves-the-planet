@@ -55,9 +55,9 @@ jobs:
           ls -la "$ANDROIDSDK/tools/bin/"
           echo "Symlink created"
 
-      - name: Download and install libtool m4 macros manually
+      - name: Download and install libtool m4 macros to system aclocal
         run: |
-          mkdir -p /tmp/custom-aclocal
+          sudo mkdir -p /usr/share/aclocal
           cd /tmp
           wget -q https://ftp.gnu.org/gnu/libtool/libtool-2.4.7.tar.gz -O libtool.tar.gz
           if [ ! -s libtool.tar.gz ]; then
@@ -65,34 +65,35 @@ jobs:
           fi
           if [ -s libtool.tar.gz ]; then
             tar -xzf libtool.tar.gz
-            find . -name "*.m4" 2>/dev/null | grep -i libtool | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
-            # Get any m4 file that mentions LT_ macros
-            find . -name "*.m4" 2>/dev/null | xargs -I {} sh -c 'grep -l "LT_" "{}" 2>/dev/null' | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
-            # Just copy ALL m4 files we can find
-            find . -name "*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
-            echo "=== Total m4 files in custom-aclocal: ==="
-            ls /tmp/custom-aclocal/ | wc -l
-            echo "=== Sample of m4 files: ==="
-            ls /tmp/custom-aclocal/ | head -20
-            # Check for the specific macro we need
-            if grep -q "LT_SYS_SYMBOL_USCORE" /tmp/custom-aclocal/*.m4 2>/dev/null; then
-              echo "LT_SYS_SYMBOL_USCORE found in installed m4 files!"
+            find . -name "libtool.m4" -o -name "lt*.m4" 2>/dev/null | while read f; do
+              sudo cp "$f" /usr/share/aclocal/
+              echo "Installed: $(basename $f)"
+            done
+            for m4file in $(find . -name "*.m4" 2>/dev/null); do
+              if grep -q "LT_SYS_SYMBOL_USCORE\|LT_INIT\|LT_SUPPORTED_TAG" "$m4file" 2>/dev/null; then
+                sudo cp "$m4file" /usr/share/aclocal/
+                echo "Installed (contains LT_ macros): $(basename $m4file)"
+              fi
+            done
+            echo "=== Total m4 files in /usr/share/aclocal: ==="
+            ls /usr/share/aclocal/ | wc -l
+            echo "=== libtool files installed: ==="
+            ls /usr/share/aclocal/ | grep -i libtool
+            if grep -r "LT_SYS_SYMBOL_USCORE" /usr/share/aclocal/ 2>/dev/null | head -1; then
+              echo "SUCCESS: LT_SYS_SYMBOL_USCORE is available system-wide"
             else
-              echo "WARNING: LT_SYS_SYMBOL_USCORE not found"
+              echo "WARNING: LT_SYS_SYMBOL_USCORE still not found"
             fi
           else
-            echo "Failed to download libtool source - will try system locations"
-            find /usr -name "*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
-            echo "Total m4 from system: $(ls /tmp/custom-aclocal/ | wc -l)"
+            echo "Download failed, exiting"
+            exit 1
           fi
-        continue-on-error: true
 
       - name: Build APK with verbose output
         run: |
           export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
           export ANDROID_SDK_ROOT="$ANDROIDSDK"
           export PATH="$ANDROIDSDK/cmdline-tools/latest/bin:$ANDROIDSDK/platform-tools:$PATH"
-          export ACLOCAL_PATH="/tmp/custom-aclocal:/usr/share/aclocal"
           yes | sdkmanager --licenses
           for i in 1 2 3; do
             echo "=== Build attempt $i ==="
