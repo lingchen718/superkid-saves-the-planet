@@ -37,8 +37,23 @@ jobs:
           print('Licenses pre-accepted')
           "
 
+      - name: Install Android cmdline-tools manually
+        run: |
+          export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$ANDROIDSDK/cmdline-tools"
+          cd /tmp
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip
+          mv cmdline-tools "$ANDROIDSDK/cmdline-tools/latest"
+          echo "cmdline-tools installed"
+
       - name: Build APK
-        run: buildozer -v android debug
+        run: |
+          export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
+          export ANDROID_SDK_ROOT="$ANDROIDSDK"
+          export PATH="$ANDROIDSDK/cmdline-tools/latest/bin:$ANDROIDSDK/platform-tools:$PATH"
+          yes | sdkmanager --licenses
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
