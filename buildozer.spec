@@ -26,7 +26,7 @@ version = 1.0.0
 # (list) Requirements
 # Only add things you actually `import`. random, math, os, sys, json are built-in.
 # If you use pygame only, this is enough. Add more if your code uses them.
-requirements = python3,pygame,android
+requirements = python3,pygame==2.1.3,android
 
 # (str) Presplash image shown while the app loads
 # Replace `presplash.png` with whatever file you have, or comment this out
@@ -54,11 +54,11 @@ log_level = 2
 android.api = 33
 
 # (int) Minimum Android API (Android 5.0)
-android.minapi = 21
+android.minapi = 24
 
 # (str) NDK version
 android.ndk = 25b
-android.ndk_api = 21
+android.ndk_api = 24
 
 # (bool) Accept Android SDK licenses automatically
 android.accept_sdk_license = True
