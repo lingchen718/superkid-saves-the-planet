@@ -54,15 +54,30 @@ jobs:
           ln -sf "$ANDROIDSDK/cmdline-tools/latest/bin/sdkmanager" "$ANDROIDSDK/tools/bin/sdkmanager"
           ls -la "$ANDROIDSDK/tools/bin/"
           echo "Symlink created"
+          
+      
+
+      - name: Setup libtool m4 macros for autoreconf
+        run: |
+          mkdir -p /tmp/custom-aclocal
+          find /usr/share -name "*.m4" -path "*/libtool/*" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+          find /usr/share -name "lt*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+          for dir in /usr/share/aclocal /usr/share/libtool /usr/share/libtool/build-aux; do
+            if [ -d "$dir" ]; then
+              find "$dir" -name "*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+            fi
+          done
+          ls /tmp/custom-aclocal/ | head -20
+          echo "Custom aclocal dir prepared"
+        continue-on-error: true
 
       - name: Build APK with verbose output
         run: |
           export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
           export ANDROID_SDK_ROOT="$ANDROIDSDK"
           export PATH="$ANDROIDSDK/cmdline-tools/latest/bin:$ANDROIDSDK/platform-tools:$PATH"
-          export ACLOCAL_PATH="/usr/share/aclocal"
+          export ACLOCAL_PATH="/usr/share/aclocal:/tmp/custom-aclocal"
           yes | sdkmanager --licenses
-          # Retry buildozer up to 3 times to handle transient 504 errors
           for i in 1 2 3; do
             echo "=== Build attempt $i ==="
             buildozer -v android debug 2>&1 | tee build.log && break
@@ -72,6 +87,7 @@ jobs:
           echo "=== Last 300 lines of build log ==="
           tail -n 300 build.log
         continue-on-error: true
+
 
 
       - name: Upload APK
