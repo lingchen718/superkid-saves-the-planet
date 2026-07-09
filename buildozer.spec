@@ -26,7 +26,7 @@ version = 1.0.0
 # (list) Requirements
 # Only add things you actually `import`. random, math, os, sys, json are built-in.
 # If you use pygame only, this is enough. Add more if your code uses them.
-requirements = python3,pygame
+requirements = python3,pygame,android
 
 # (str) Presplash image shown while the app loads
 # Replace `presplash.png` with whatever file you have, or comment this out
@@ -63,5 +63,13 @@ android.ndk_api = 21
 # (bool) Accept Android SDK licenses automatically
 android.accept_sdk_license = True
 
+# Make sure build-tools version is explicit so buildozer downloads it
+android.build_tools_version = 33.0.2
+# Platform tools (adb, fastboot, etc.)
+android.platform_tools_version = 33.0.2
+# Add the build-tools directory to PATH
+android.sdk_path = $ANDROIDSDK
+
 # (str) Permissions - leave empty unless you need network/storage
 android.permissions =
+
