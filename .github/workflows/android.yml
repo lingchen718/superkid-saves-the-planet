@@ -19,7 +19,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential ccache git libncurses6 openjdk-17-jdk-headless unzip zip wget zlib1g-dev autoconf automake libtool libtool-bin pkg-config gettext
+          sudo apt-get install -y build-essential ccache git libncurses6 openjdk-17-jdk-headless unzip zip wget zlib1g-dev autoconf automake libtool libtool-bin pkg-config gettext m4 bison flex
 
       - name: Install buildozer
         run: pip install buildozer==1.5.0 cython==0.29.36
@@ -54,21 +54,37 @@ jobs:
           ln -sf "$ANDROIDSDK/cmdline-tools/latest/bin/sdkmanager" "$ANDROIDSDK/tools/bin/sdkmanager"
           ls -la "$ANDROIDSDK/tools/bin/"
           echo "Symlink created"
-          
-      
 
-      - name: Setup libtool m4 macros for autoreconf
+      - name: Download and install libtool m4 macros manually
         run: |
           mkdir -p /tmp/custom-aclocal
-          find /usr/share -name "*.m4" -path "*/libtool/*" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
-          find /usr/share -name "lt*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
-          for dir in /usr/share/aclocal /usr/share/libtool /usr/share/libtool/build-aux; do
-            if [ -d "$dir" ]; then
-              find "$dir" -name "*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+          cd /tmp
+          wget -q https://ftp.gnu.org/gnu/libtool/libtool-2.4.7.tar.gz -O libtool.tar.gz
+          if [ ! -s libtool.tar.gz ]; then
+            wget -q https://github.com/autotools-mirror/libtool/archive/refs/tags/v2.4.7.tar.gz -O libtool.tar.gz
+          fi
+          if [ -s libtool.tar.gz ]; then
+            tar -xzf libtool.tar.gz
+            find . -name "*.m4" 2>/dev/null | grep -i libtool | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+            # Get any m4 file that mentions LT_ macros
+            find . -name "*.m4" 2>/dev/null | xargs -I {} sh -c 'grep -l "LT_" "{}" 2>/dev/null' | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+            # Just copy ALL m4 files we can find
+            find . -name "*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+            echo "=== Total m4 files in custom-aclocal: ==="
+            ls /tmp/custom-aclocal/ | wc -l
+            echo "=== Sample of m4 files: ==="
+            ls /tmp/custom-aclocal/ | head -20
+            # Check for the specific macro we need
+            if grep -q "LT_SYS_SYMBOL_USCORE" /tmp/custom-aclocal/*.m4 2>/dev/null; then
+              echo "LT_SYS_SYMBOL_USCORE found in installed m4 files!"
+            else
+              echo "WARNING: LT_SYS_SYMBOL_USCORE not found"
             fi
-          done
-          ls /tmp/custom-aclocal/ | head -20
-          echo "Custom aclocal dir prepared"
+          else
+            echo "Failed to download libtool source - will try system locations"
+            find /usr -name "*.m4" 2>/dev/null | xargs -I {} cp {} /tmp/custom-aclocal/ 2>/dev/null || true
+            echo "Total m4 from system: $(ls /tmp/custom-aclocal/ | wc -l)"
+          fi
         continue-on-error: true
 
       - name: Build APK with verbose output
@@ -76,7 +92,7 @@ jobs:
           export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
           export ANDROID_SDK_ROOT="$ANDROIDSDK"
           export PATH="$ANDROIDSDK/cmdline-tools/latest/bin:$ANDROIDSDK/platform-tools:$PATH"
-          export ACLOCAL_PATH="/usr/share/aclocal:/tmp/custom-aclocal"
+          export ACLOCAL_PATH="/tmp/custom-aclocal:/usr/share/aclocal"
           yes | sdkmanager --licenses
           for i in 1 2 3; do
             echo "=== Build attempt $i ==="
@@ -87,8 +103,6 @@ jobs:
           echo "=== Last 300 lines of build log ==="
           tail -n 300 build.log
         continue-on-error: true
-
-
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -102,5 +116,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: build.log
-          if-no-files-found: ignore
+        path: build.log
+        if-no-files-found: ignore
