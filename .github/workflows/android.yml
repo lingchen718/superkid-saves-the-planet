@@ -55,13 +55,16 @@ jobs:
           ls -la "$ANDROIDSDK/tools/bin/"
           echo "Symlink created"
 
-      - name: Build APK
+      - name: Build APK with verbose output
         run: |
           export ANDROIDSDK="$HOME/.buildozer/android/platform/android-sdk"
           export ANDROID_SDK_ROOT="$ANDROIDSDK"
           export PATH="$ANDROIDSDK/cmdline-tools/latest/bin:$ANDROIDSDK/platform-tools:$PATH"
           yes | sdkmanager --licenses
-          buildozer -v android debug
+          buildozer -v android debug 2>&1 | tee build.log
+          echo "=== Last 300 lines of build log ==="
+          tail -n 300 build.log
+        continue-on-error: true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -69,3 +72,11 @@ jobs:
           name: app-debug
           path: bin/*.apk
           if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
