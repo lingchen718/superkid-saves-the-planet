@@ -62,10 +62,17 @@ jobs:
           export PATH="$ANDROIDSDK/cmdline-tools/latest/bin:$ANDROIDSDK/platform-tools:$PATH"
           export ACLOCAL_PATH="/usr/share/aclocal"
           yes | sdkmanager --licenses
-          buildozer -v android debug 2>&1 | tee build.log
+          # Retry buildozer up to 3 times to handle transient 504 errors
+          for i in 1 2 3; do
+            echo "=== Build attempt $i ==="
+            buildozer -v android debug 2>&1 | tee build.log && break
+            echo "Build attempt $i failed, retrying in 30 seconds..."
+            sleep 30
+          done
           echo "=== Last 300 lines of build log ==="
           tail -n 300 build.log
         continue-on-error: true
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
