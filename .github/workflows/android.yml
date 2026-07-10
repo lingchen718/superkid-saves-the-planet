@@ -42,6 +42,8 @@ jobs:
           PIP_CONSTRAINT: /tmp/constraints.txt
         run: |
           pip install --upgrade pip
+          # Uninstall any existing sh/setuptools to start clean
+          pip uninstall -y sh setuptools 2>/dev/null || true
           pip install --upgrade-strategy only-if-needed setuptools==65.5.0
           pip install --upgrade-strategy only-if-needed wheel
           pip install --upgrade-strategy only-if-needed "sh>=1.10,<2.0"
@@ -49,10 +51,12 @@ jobs:
           pip install --upgrade-strategy only-if-needed cython==0.29.36
           pip install --upgrade-strategy only-if-needed "python-for-android==2024.1.21"
           pip install --upgrade-strategy only-if-needed "Pillow>=10.0,<11.0"
-          pip install --upgrade-strategy only-if-needed setuptools==65.5.0
-          pip install --upgrade-strategy only-if-needed "sh>=1.10,<2.0"
+          # Force-downgrade at the end (overrides any silent upgrade)
+          pip install --upgrade "setuptools==65.5.0"
+          pip install --upgrade "sh>=1.10,<2.0"
           echo "=== Installed versions: ==="
           pip show setuptools sh python-for-android Pillow | grep -E "Name|Version"
+      
 
       - name: Pre-accept Android SDK licenses
         run: |
