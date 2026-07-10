@@ -21,21 +21,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential ccache git libncurses6 openjdk-17-jdk-headless unzip zip wget zlib1g-dev autoconf automake libtool libtool-bin pkg-config gettext m4 bison flex
 
-      - name: Install buildozer with strict version pinning
-        # FIX #1: setuptools pinned to <80 so distutils shim exists (fixes
-        #         'AttributeError: module distutils.ccompiler has no attribute spawn').
-        # FIX #2: sh pinned to <2.0 BEFORE buildozer so p4a 2024.1.21 doesn't
-        #         complain 'requires sh<2.0, but you have sh 2.x'.
+      - name: Install buildozer with strict version locking
         run: |
           pip install --upgrade pip
-          pip install --upgrade-strategy only-if-needed "setuptools>=65.5.0,<80" wheel
+          pip install --upgrade-strategy only-if-needed setuptools==65.5.0
+          pip install --upgrade-strategy only-if-needed wheel
           pip install --upgrade-strategy only-if-needed "sh>=1.10,<2.0"
-          pip install --upgrade-strategy only-if-needed buildozer==1.5.0 "cython>=0.29.36,<3.0"
+          pip install --upgrade-strategy only-if-needed buildozer==1.5.0
+          pip install --upgrade-strategy only-if-needed cython==0.29.36
           pip install --upgrade-strategy only-if-needed "python-for-android==2024.1.21"
           pip install --upgrade-strategy only-if-needed "Pillow>=10.0,<11.0"
-          pip install --upgrade-strategy only-if-needed "setuptools>=65.5.0,<80"
-          # Sanity printout so the failure mode is obvious in the log
-          python -c "import setuptools, sh, distutils.ccompiler; print('setuptools', setuptools.__version__); print('sh', sh.__version__); print('distutils.ccompiler.spawn OK')"
+          pip install --upgrade-strategy only-if-needed setuptools==65.5.0
+          pip install --upgrade-strategy only-if-needed "sh>=1.10,<2.0"
+          echo "=== Installed versions: ==="
+          pip show setuptools sh python-for-android Pillow | grep -E "Name|Version"
 
       - name: Pre-accept Android SDK licenses
         run: |
@@ -81,16 +80,6 @@ jobs:
             find . -name "libtool.m4" -o -name "lt*.m4" 2>/dev/null | xargs -I {} sudo cp {} /usr/share/aclocal/
             echo "libtool m4 macros installed"
           fi
-
-      - name: Patch buildozer to use Pillow<11
-        run: |
-          P4A_PATH=$(python3 -c "import pythonforandroid; print(pythonforandroid.__path__[0])")
-          echo "python-for-android path: $P4A_PATH"
-          if grep -r "Pillow" "$P4A_PATH/recipes/pillow/" 2>/dev/null; then
-            echo "Pillow recipe found, checking version..."
-            cat "$P4A_PATH/recipes/pillow/__init__.py" 2>/dev/null
-          fi
-        continue-on-error: true
 
       - name: Build APK with verbose output
         run: |
