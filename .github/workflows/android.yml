@@ -21,7 +21,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential ccache git libncurses6 openjdk-17-jdk-headless unzip zip wget zlib1g-dev autoconf automake libtool libtool-bin pkg-config gettext m4 bison flex
 
+      - name: Force Python package versions with PIP_CONSTRAINT
+        run: |
+          cat > /tmp/constraints.txt << 'EOF'
+          setuptools==65.5.0
+          sh>=1.10,<2.0
+          cython==0.29.36
+          buildozer==1.5.0
+          python-for-android==2024.1.21
+          Pillow>=10.0,<11.0
+          EOF
+          cat /tmp/constraints.txt
+        env:
+          PIP_CONSTRAINT: /tmp/constraints.txt
+
+
+
       - name: Install buildozer with strict version locking
+        env:
+          PIP_CONSTRAINT: /tmp/constraints.txt
         run: |
           pip install --upgrade pip
           pip install --upgrade-strategy only-if-needed setuptools==65.5.0
