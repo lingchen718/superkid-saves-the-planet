@@ -41,23 +41,21 @@ jobs:
         run: |
           pip install --upgrade pip
 
-          # Force-install the exact versions of the conflicting packages FIRST
-          echo "=== Forcing sh to compatible version ==="
-          pip install --upgrade --force-reinstall "sh==1.14.3"
-
-          echo "=== Forcing setuptools to compatible version ==="
-          pip install --upgrade --force-reinstall "setuptools==65.5.0"
-
-          # Now install buildozer and friends WITHOUT pulling in their dependency resolvers
-          echo "=== Installing buildozer ==="
+          echo "=== Pre-install all the package-only dependencies ==="
           pip install --no-deps "buildozer==1.5.0"
           pip install --no-deps "cython==0.29.36"
           pip install --no-deps "python-for-android==2024.1.21"
           pip install --no-deps "Pillow>=10.0,<11.0"
 
-          # Then install only the dependencies that python-for-android needs at runtime
-          # (these are the deps that were causing the sh conflict)
-          echo "=== Installing runtime dependencies manually ==="
+          echo "=== Patching python-for-android pillow recipe ==="
+          P4A_PATH=$(python3 -c "import pythonforandroid; print(pythonforandroid.__path__[0])")
+          find $P4A_PATH -name "*.py" | xargs grep -l "Pillow" 2>/dev/null | while read f; do
+            echo "Found Pillow reference in: $f"
+            sed -i 's|Pillow==11\.[0-9]*\.[0-9]*|Pillow==10.4.0|g' "$f"
+          done
+
+          echo "=== Installing transitive dependencies manually ==="
+          pip install --upgrade-strategy only-if-needed "virtualenv"
           pip install --upgrade-strategy only-if-needed "colorama"
           pip install --upgrade-strategy only-if-needed "jinja2"
           pip install --upgrade-strategy only-if-needed "build"
@@ -70,16 +68,14 @@ jobs:
           pip install --upgrade-strategy only-if-needed "docutils"
           pip install --upgrade-strategy only-if-needed "pyparsing"
           pip install --upgrade-strategy only-if-needed "Cython"
-          pip install --upgrade-strategy only-if-needed "pexpect"
-          pip install --upgrade-strategy only-if-needed "ptyprocess"
-          pip install --upgrade-strategy only-if-needed "docutils"
-          pip install --upgrade-strategy only-if-needed "pyparsing"
-          pip install --upgrade-strategy only-if-needed "Cython"
 
+          echo "=== FINAL LOCK: force-reinstall sh and setuptools ==="
+          pip install --upgrade --force-reinstall "sh==1.14.3"
+          pip install --upgrade --force-reinstall "setuptools==65.5.0"
 
-          # FINAL VERIFICATION
           echo "=== Final installed versions: ==="
-          pip show setuptools sh python-for-android buildozer Pillow | grep -E "Name|Version"
+          pip show setuptools sh python-for-android buildozer Pillow virtualenv | grep -E "Name|Version"
+      
       
       - name: Patch python-for-android to use compatible Pillow version
         run: |
