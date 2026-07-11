@@ -235,25 +235,25 @@ class AssetManager:
         self.sounds["good"] = pygame.mixer.Sound(
             os.path.join(
                 "sounds",
-                "Panel Dressup Correct.mp3"
+                "spell3.wav"
             )
         )
 
         self.sounds["bad"] = pygame.mixer.Sound(
             os.path.join(
                 "sounds",
-                "Panel Dressup Wrong.mp3"
+                "DeathFlash.flac"
             )
         )
 
         self.sounds["quiz"] = pygame.mixer.Sound(
             os.path.join(
                 "sounds",
-                "195. Out Pass Reward Gain.mp3"
+                "quiz.wav"
             )
         )
 
-        self.sounds["celebration"] = pygame.mixer.Sound(os.path.join("sounds", "Czerwony.mp3"))
+        self.sounds["celebration"] = pygame.mixer.Sound(os.path.join("sounds", "newthingget.ogg"))
 
     def play_music(self, name, loops=-1):
 
@@ -266,12 +266,12 @@ class AssetManager:
 
         self.music["polluted"] = os.path.join(
             "sounds",
-            "14. snow.mp3"
+            "Iwan Gabovitch - Dark Ambience Loop.ogg"
         )
 
         self.music["clean"] = os.path.join(
             "sounds",
-            "19. Sandgem Town (Day).mp3"
+            "A Journey Awaits.ogg"
         )
 
     def stop_music(self):
