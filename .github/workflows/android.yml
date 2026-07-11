@@ -81,7 +81,26 @@ jobs:
           echo "=== Final installed versions: ==="
           pip show setuptools sh python-for-android buildozer Pillow | grep -E "Name|Version"
       
-      
+      - name: Patch python-for-android to use compatible Pillow version
+        run: |
+          P4A_PATH=$(python3 -c "import pythonforandroid; print(pythonforandroid.__path__[0])")
+          echo "python-for-android path: $P4A_PATH"
+          
+          # Find the pillow recipe and patch its version
+          PILLOW_RECIPE="$P4A_PATH/recipes/pillow/__init__.py"
+          if [ -f "$PILLOW_RECIPE" ]; then
+            echo "Patching pillow recipe..."
+            cat "$PILLOW_RECIPE"
+            # Replace any '11.x' version with '10.4.0'
+            sed -i 's|Pillow==11\.[0-9]*\.[0-9]*|Pillow==10.4.0|g' "$PILLOW_RECIPE"
+            sed -i 's|"Pillow >= 11|"Pillow >= 10|g' "$PILLOW_RECIPE"
+            echo "After patching:"
+            cat "$PILLOW_RECIPE"
+          else
+            echo "No pillow recipe found, trying alternate locations"
+            find $P4A_PATH -name "*pillow*" -type f
+          fi
+
 
       - name: Pre-accept Android SDK licenses
         run: |

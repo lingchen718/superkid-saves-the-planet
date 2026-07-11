@@ -26,7 +26,7 @@ version = 1.0.0
 # (list) Requirements
 # Only add things you actually `import`. random, math, os, sys, json are built-in.
 # If you use pygame only, this is enough. Add more if your code uses them.
-requirements = python3,pygame==2.1.3,pillow
+requirements = python3,pygame==2.1.3,pillow==10.4.0
 
 
 # (str) Presplash image shown while the app loads
