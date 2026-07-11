@@ -35,6 +35,30 @@ jobs:
         env:
           PIP_CONSTRAINT: /tmp/constraints.txt
 
+      - name: Download and patch python-for-android source
+        run: |
+          cd /tmp
+          pip download --no-deps --no-binary :all: "python-for-android==2024.1.21" -d p4a-source
+          cd p4a-source
+          tar -xzf python-for-android-*.tar.gz
+          cd python-for-android-2024.1.21
+          # Find every file that mentions Pillow==11 and patch it
+          grep -rl "Pillow==11" pythonforandroid/ 2>/dev/null | while read f; do
+            echo "Patching: $f"
+            sed -i 's|Pillow==11\.[0-9]*\.[0-9]*|Pillow==10.4.0|g' "$f"
+            sed -i 's|"Pillow>=11|"Pillow>=10|g' "$f"
+            sed -i 's|"Pillow>11|"Pillow>=10|g' "$f"
+          done
+          # Also patch Pillow 11.x version specifications
+          grep -rl "Pillow>=11\|Pillow>11" pythonforandroid/ 2>/dev/null | while read f; do
+            echo "Patching Pillow range: $f"
+            sed -i 's|Pillow>=11|Pillow>=10|g' "$f"
+            sed -i 's|Pillow>11|Pillow>=10|g' "$f"
+          done
+          # Show what we patched
+          grep -rn "Pillow" pythonforandroid/recipes/pillow/ 2>/dev/null
+          # Reinstall from the patched source
+          pip install --no-deps .
 
 
       - name: Install buildozer with manual dependency control
