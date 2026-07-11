@@ -57,7 +57,7 @@ jobs:
 
           # Then install only the dependencies that python-for-android needs at runtime
           # (these are the deps that were causing the sh conflict)
-          echo "=== Installing runtime dependencies ==="
+          echo "=== Installing runtime dependencies manually ==="
           pip install --upgrade-strategy only-if-needed "colorama"
           pip install --upgrade-strategy only-if-needed "jinja2"
           pip install --upgrade-strategy only-if-needed "build"
@@ -65,6 +65,17 @@ jobs:
           pip install --upgrade-strategy only-if-needed "packaging"
           pip install --upgrade-strategy only-if-needed "filelock"
           pip install --upgrade-strategy only-if-needed "appdirs"
+          pip install --upgrade-strategy only-if-needed "pexpect"
+          pip install --upgrade-strategy only-if-needed "ptyprocess"
+          pip install --upgrade-strategy only-if-needed "docutils"
+          pip install --upgrade-strategy only-if-needed "pyparsing"
+          pip install --upgrade-strategy only-if-needed "Cython"
+          pip install --upgrade-strategy only-if-needed "pexpect"
+          pip install --upgrade-strategy only-if-needed "ptyprocess"
+          pip install --upgrade-strategy only-if-needed "docutils"
+          pip install --upgrade-strategy only-if-needed "pyparsing"
+          pip install --upgrade-strategy only-if-needed "Cython"
+
 
           # FINAL VERIFICATION
           echo "=== Final installed versions: ==="
