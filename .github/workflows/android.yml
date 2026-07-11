@@ -38,27 +38,61 @@ jobs:
       - name: Download and patch python-for-android source
         run: |
           cd /tmp
-          pip download --no-deps --no-binary :all: "python-for-android==2024.1.21" -d p4a-source
+          rm -rf p4a-source
+          mkdir p4a-source
           cd p4a-source
-          tar -xzf python-for-android-*.tar.gz
+
+          # Download just the sdist (no build deps yet)
+          pip download --no-deps --no-build-isolation "python-for-android==2024.1.21" --no-binary :all: -d . 2>&1 | tail -3
+
+          # Extract
+          tar -xzf python-for-android-2024.1.21.tar.gz
           cd python-for-android-2024.1.21
-          # Find every file that mentions Pillow==11 and patch it
-          grep -rl "Pillow==11" pythonforandroid/ 2>/dev/null | while read f; do
-            echo "Patching: $f"
-            sed -i 's|Pillow==11\.[0-9]*\.[0-9]*|Pillow==10.4.0|g' "$f"
-            sed -i 's|"Pillow>=11|"Pillow>=10|g' "$f"
-            sed -i 's|"Pillow>11|"Pillow>=10|g' "$f"
-          done
-          # Also patch Pillow 11.x version specifications
-          grep -rl "Pillow>=11\|Pillow>11" pythonforandroid/ 2>/dev/null | while read f; do
-            echo "Patching Pillow range: $f"
-            sed -i 's|Pillow>=11|Pillow>=10|g' "$f"
-            sed -i 's|Pillow>11|Pillow>=10|g' "$f"
-          done
-          # Show what we patched
-          grep -rn "Pillow" pythonforandroid/recipes/pillow/ 2>/dev/null
+
+          # Show what's in the pillow recipe before patching
+          echo "=== BEFORE: Pillow references in p4a source ==="
+          grep -rn "Pillow" pythonforandroid/recipes/pillow/ 2>/dev/null | head -20 || echo "(no pillow recipe found)"
+
+          # Patch all Pillow 11.x version specifications using a single Python script
+          # (avoids sed escaping nightmares)
+          python3 << 'PYEOF'
+          import os
+          import re
+
+          patched_files = []
+          for root, dirs, files in os.walk('pythonforandroid'):
+              for f in files:
+                  if f.endswith('.py') or f.endswith('.sh'):
+                      path = os.path.join(root, f)
+                      try:
+                          with open(path, 'r', encoding='utf-8') as fp:
+                              content = fp.read()
+                          original = content
+                          # Patch Pillow 11.x.x -> 10.4.0
+                          content = re.sub(r'Pillow==11\.\d+\.\d+', 'Pillow==10.4.0', content)
+                          # Patch Pillow>=11 -> Pillow>=10
+                          content = re.sub(r'Pillow>=11', 'Pillow>=10', content)
+                          # Patch Pillow>11 -> Pillow>=10
+                          content = re.sub(r'Pillow>11', 'Pillow>=10', content)
+                          if content != original:
+                              with open(path, 'w', encoding='utf-8') as fp:
+                                  fp.write(content)
+                              patched_files.append(path)
+                      except Exception as e:
+                          print(f"Skipped {path}: {e}")
+
+          print(f"Patched {len(patched_files)} files:")
+          for p in patched_files:
+              print(f"  {p}")
+          PYEOF
+
+          # Verify
+          echo "=== AFTER: Pillow references still in p4a source ==="
+          grep -rn "Pillow==11\|Pillow>=11\|Pillow>11" pythonforandroid/ 2>/dev/null | head -10 || echo "(all patched successfully)"
+
           # Reinstall from the patched source
           pip install --no-deps .
+          echo "=== p4a reinstalled from patched source ==="
 
 
       - name: Install buildozer with manual dependency control
