@@ -37,25 +37,39 @@ jobs:
 
 
 
-      - name: Install buildozer with strict version locking
-        env:
-          PIP_CONSTRAINT: /tmp/constraints.txt
+      - name: Install buildozer with manual dependency control
         run: |
           pip install --upgrade pip
-          # Uninstall any existing sh/setuptools to start clean
-          pip uninstall -y sh setuptools 2>/dev/null || true
-          pip install --upgrade-strategy only-if-needed setuptools==65.5.0
-          pip install --upgrade-strategy only-if-needed wheel
-          pip install --upgrade-strategy only-if-needed "sh>=1.10,<2.0"
-          pip install --upgrade-strategy only-if-needed buildozer==1.5.0
-          pip install --upgrade-strategy only-if-needed cython==0.29.36
-          pip install --upgrade-strategy only-if-needed "python-for-android==2024.1.21"
-          pip install --upgrade-strategy only-if-needed "Pillow>=10.0,<11.0"
-          # Force-downgrade at the end (overrides any silent upgrade)
-          pip install --upgrade "setuptools==65.5.0"
-          pip install --upgrade "sh>=1.10,<2.0"
-          echo "=== Installed versions: ==="
-          pip show setuptools sh python-for-android Pillow | grep -E "Name|Version"
+
+          # Force-install the exact versions of the conflicting packages FIRST
+          echo "=== Forcing sh to compatible version ==="
+          pip install --upgrade --force-reinstall "sh==1.14.3"
+
+          echo "=== Forcing setuptools to compatible version ==="
+          pip install --upgrade --force-reinstall "setuptools==65.5.0"
+
+          # Now install buildozer and friends WITHOUT pulling in their dependency resolvers
+          echo "=== Installing buildozer ==="
+          pip install --no-deps "buildozer==1.5.0"
+          pip install --no-deps "cython==0.29.36"
+          pip install --no-deps "python-for-android==2024.1.21"
+          pip install --no-deps "Pillow>=10.0,<11.0"
+
+          # Then install only the dependencies that python-for-android needs at runtime
+          # (these are the deps that were causing the sh conflict)
+          echo "=== Installing runtime dependencies ==="
+          pip install --upgrade-strategy only-if-needed "colorama"
+          pip install --upgrade-strategy only-if-needed "jinja2"
+          pip install --upgrade-strategy only-if-needed "build"
+          pip install --upgrade-strategy only-if-needed "toml"
+          pip install --upgrade-strategy only-if-needed "packaging"
+          pip install --upgrade-strategy only-if-needed "filelock"
+          pip install --upgrade-strategy only-if-needed "appdirs"
+
+          # FINAL VERIFICATION
+          echo "=== Final installed versions: ==="
+          pip show setuptools sh python-for-android buildozer Pillow | grep -E "Name|Version"
+      
       
 
       - name: Pre-accept Android SDK licenses
