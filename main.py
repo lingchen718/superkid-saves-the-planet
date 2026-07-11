@@ -744,7 +744,7 @@ class SuperKidsGame:
         # ── 4. Subtitle text — one line at a time below the earth ─────
         # sub_font = pygame.font.SysFont("Arial Rounded MT Bold", 30)
         sub_font = self.assets.fonts["sub"]
-        sub_y = img_y + img.get_height() + 36
+        sub_y = img_y + img.get_height() - 20
 
         if hasattr(self, '_intro_sub_index') and not self._intro_lines_done:
             idx = self._intro_sub_index
@@ -793,7 +793,7 @@ class SuperKidsGame:
             "Press ENTER to Begin Your Mission!", True, (pr, pg, pb)
         )
         prompt_x = sw // 2 - prompt_surf.get_width() // 2
-        prompt_y = int(sh * 0.91)
+        prompt_y = int(sh * 0.86)
 
         gp_w = prompt_surf.get_width() + 44
         gp_h = prompt_surf.get_height() + 18
@@ -954,9 +954,10 @@ class SuperKidsGame:
 
         # ── 5. Congratulation sub-lines ───────────────────────────
         # win_font   = pygame.font.SysFont("Arial Rounded MT Bold", 28)
-        headline_font = self.assets.fonts["win"]
+        win_font = self.assets.fonts["win"]
         line_y     = hl_y + hl_surf.get_height() + 18
         line_gap   = 36
+
 
         for i, line in enumerate(WIN_LINES):
             if not line:

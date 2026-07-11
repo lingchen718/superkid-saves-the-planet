@@ -25,3 +25,7 @@ Thumbs.db
 .env
 .venv/
 venv/
+ # Pygbag build output build/
+
+# Pygbag build output
+build/
