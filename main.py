@@ -4,6 +4,7 @@ import pygame
 import math
 import time
 import os
+import asyncio
 from settings import SuperKidsSettings
 from asset_manager import AssetManager
 from game_stats import GameStats
@@ -11,6 +12,7 @@ from scoreboard import Scoreboard
 from button import Button
 from SuperKid import SuperKid
 from FallingItems import FallingItem
+
 
 
 
@@ -585,7 +587,7 @@ class SuperKidsGame:
     #  MAIN LOOP
     # ─────────────────────────────────────────
 
-    def run_game(self):
+    async def run_game(self):
         """Main game loop — dispatches based on game_state."""
         while True:
             self._check_events()
@@ -628,6 +630,7 @@ class SuperKidsGame:
                 self._update_screen()
 
             pygame.display.flip()
+            await asyncio.sleep(0)
             self.clock.tick(self.settings.fps)
 
     # ─────────────────────────────────────────
@@ -1512,6 +1515,8 @@ class SuperKidsGame:
         self.current_bg           = self.polluted_bg
 
 
+
+
 if __name__ == '__main__':
     game = SuperKidsGame()
-    game.run_game()# Thu Jul  9 23:25:20 CST 2026
+    asyncio.run(game.run_game())
