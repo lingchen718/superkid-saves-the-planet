@@ -18,9 +18,10 @@ jobs:
 
       - name: Build web app with Pygbag
         run: |
-          pip install --upgrade pygbag
+          pip install pygbag==0.9.4
           pygbag main.py
-      
+
+
 
       - name: Upload web build
         uses: actions/upload-artifact@v4
