@@ -235,21 +235,21 @@ class AssetManager:
         self.sounds["good"] = pygame.mixer.Sound(
             os.path.join(
                 "sounds",
-                "spell3.wav"
+                "coinsplash.ogg"
             )
         )
 
         self.sounds["bad"] = pygame.mixer.Sound(
             os.path.join(
                 "sounds",
-                "DeathFlash.flac"
+                "alarm.ogg"
             )
         )
 
         self.sounds["quiz"] = pygame.mixer.Sound(
             os.path.join(
                 "sounds",
-                "quiz.wav"
+                "magical_6.ogg"
             )
         )
 
