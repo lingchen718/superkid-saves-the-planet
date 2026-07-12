@@ -582,6 +582,7 @@ class SuperKidsGame:
         self.stats.game_active = False
         self.play_button       = Button(self, "Start Game")
         self.game_won          = False
+        self.running = True
 
     # ─────────────────────────────────────────
     #  MAIN LOOP

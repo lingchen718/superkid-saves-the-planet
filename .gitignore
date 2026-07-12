@@ -1,31 +1,11 @@
-# buildozer cache and output (NEVER commit these)
-bin/
-.buildozer/
-
-# Python
+build/
 __pycache__/
 *.pyc
 *.pyo
-
-# IDE
 .idea/
-*.iml
-.vscode/
-
-# OS junk
 .DS_Store
 Thumbs.db
 
-# Logs and temp
-*.log
-*.tmp
-*.bak
-
-# Environment
-.env
-.venv/
+# Python virtual environment
 venv/
- # Pygbag build output build/
-
-# Pygbag build output
-build/
+fresh-venv/
