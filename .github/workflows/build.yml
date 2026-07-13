@@ -48,20 +48,19 @@ jobs:
       #
       # That makes the build independent of the CDN at runtime.
       # ------------------------------------------------------------------
-      - name: Install pygbag (force-reinstall, pinned)
-        id: install_pygbag
+      - name: Install pygbag (with CDN-pinned fallback chain)
         run: |
           python -m pip install --upgrade pip
+          # Try the older stable PyPI release first
           if python -m pip install --upgrade --force-reinstall pygbag==0.9.2; then
-            echo "Installed pygbag 0.9.2 from PyPI"
+            echo "installed pygbag==0.9.2 from PyPI"
           else
-            # Fallback: dev source build per memory recall
+            # Fall back to dev source — has the upstream CDN fixes already applied
             python -m pip install --upgrade --force-reinstall \
               "git+https://github.com/pygame-web/pygbag.git"
-            echo "Installed pygbag from source as fallback"
+            echo "installed pygbag from source"
           fi
-          python -c "import pygbag, os; print('version=', pygbag.__version__); \
-                     print('templates=', os.path.dirname(pygbag.__file__))"
+          python -c "import pygbag; print('installed:', pygbag.__version__)"
 
       # ------------------------------------------------------------------
       # Manual CDN patch (memory recall #3).
