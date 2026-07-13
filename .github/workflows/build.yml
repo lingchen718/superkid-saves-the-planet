@@ -19,121 +19,119 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # ------------------------------------------------------------------
-      # Memory note (verified three times across this thread):
-      #
-      #   - 'pip install --upgrade pygbag' once silently left the env at
-      #     a version with broken CDN URLs. Pinning explicitly + printing
-      #     the installed version is the cheap cure.
-      #   - Pygbag 0.9.x is likely all affected by some CDN 404 issue
-      #     depending on the exact version. Treat the CDN as unreliable.
-      #
-      # Strategy used here:
-      #   1. Force-reinstall pygbag==0.9.2 (the older-but-working pin).
-      #      If PyPI rejects it for any reason, we fall through to the
-      #      dev source build.
-      #   2. After install, scan pygbag's templates for any URL pointing
-      #      at `pygame-web.github.io/cdn`, download those assets to
-      #      ./ and rewrite the template to use relative paths.
-      #
-      # That makes the build independent of the CDN at runtime.
-      # ------------------------------------------------------------------
-      - name: Install pygbag (with CDN-pinned fallback chain)
+      # ─── 1. Install pygbag (memory recall: 0.9.2 is the older fallback
+      #         that predates the 0.9.3 browserfs.min.js CDN double-slash bug) ───
+      - name: Install pygbag (with fallback chain)
         run: |
           python -m pip install --upgrade pip
-          # Try the older stable PyPI release first
           if python -m pip install --upgrade --force-reinstall pygbag==0.9.2; then
-            echo "installed pygbag==0.9.2 from PyPI"
+            echo "PIP_VERSION_STATUS=ok"
           else
-            # Fall back to dev source — has the upstream CDN fixes already applied
             python -m pip install --upgrade --force-reinstall \
               "git+https://github.com/pygame-web/pygbag.git"
-            echo "installed pygbag from source"
+            echo "PIP_VERSION_STATUS=git_source"
           fi
           python -m pip show pygbag | head -3
 
-
-      # ------------------------------------------------------------------
-      # Manual CDN patch (memory recall #3).
-      # ------------------------------------------------------------------
-      - name: Pre-bundle pygbag CDN assets locally
+      # ─── 2. Discover where pygbag's templates actually live ───
+      - name: Locate pygbag templates
+        id: locate_templates
         run: |
-          set -e
-          TMPL_DIR="$(python -c 'import pygbag, os; print(os.path.dirname(pygbag.__file__))')/templates"
-          echo "pygbag template dir: $TMPL_DIR"
-          ls "$TMPL_DIR"
+          PKG_DIR="$(python -c 'import pygbag, os; print(os.path.dirname(pygbag.__file__))')"
+          echo "PKG_DIR=$PKG_DIR"
+          # Find any .html / .tmpl inside the package
+          find "$PKG_DIR" -maxdepth 4 -type f \
+            \( -name '*.html' -o -name '*.tmpl' \) 2>/dev/null \
+            | tee /tmp/template_files.txt
+          echo "TEMPLATE_COUNT=$(wc -l < /tmp/template_files.txt)" >> "$GITHUB_OUTPUT"
 
-          # 1. Collect every CDN URL the templates reference.
-          ASSETS=$(grep -hoE "https?://pygame-web\.github\.io/cdn[^'\" )\`]+" \
-                     "$TMPL_DIR"/*.html "$TMPL_DIR"/*.tmpl \
-                     "$TMPL_DIR"/*.css "$TMPL_DIR"/*.js 2>/dev/null \
-                   | sort -u || true)
+      # ─── 3. Pre-bundle pygbag CDN assets locally
+      #         Memory recall: "download missing CDN files into project root
+      #         and patch the template index.html script src tags to point
+      #         at local files. Pattern: search the template index.html
+      #         for any <script src> or <link href> pointing to
+      #         pygame-web.github.io/cdn and replace with relative paths." ───
+      - name: Patch pygbag template CDN URLs → local
+        run: |
+          if [ ! -s /tmp/template_files.txt ]; then
+            echo "No template files found — patch skipped."
+            exit 0
+          fi
+
+          # 1. Collect CDN URLs referenced in templates
+          ASSETS=$(xargs cat < /tmp/template_files.txt \
+                    | grep -hoE "https?://pygame-web\.github\.io/cdn[^'\" )\`]+" \
+                    | sort -u || true)
+
           if [ -z "$ASSETS" ]; then
-            echo "No CDN references found — patch step is a no-op."
+            echo "No CDN URLs in templates — patch is a no-op."
           else
-            echo "CDN references found:"
+            echo "CDN URLs to pre-bundle:"
             echo "$ASSETS"
 
-            # 2. Download each asset into the project root.
+            # 2. Download each asset
             echo "$ASSETS" | while IFS= read -r url; do
               [ -z "$url" ] && continue
               fname="${url##*/}"
-              echo "fetching $url -> $fname"
-              if ! curl -fsSL "$url" -o "$fname"; then
-                echo "  (curl failed for $url, skipping)"
-                rm -f "$fname"
+              if curl -fsSL "$url" -o "$fname"; then
+                echo "fetched $fname"
+              else
+                echo "FAILED to fetch $url"
               fi
             done
 
-            # 3. Rewrite template URLs to local relative paths.
+            # 3. Patch templates to use relative paths
             echo "$ASSETS" | while IFS= read -r url; do
               [ -z "$url" ] && continue
               fname="${url##*/}"
-              echo "rewriting $url -> ./$fname"
-              # Update template files
-              find "$TMPL_DIR" -maxdepth 3 -type f \
-                \( -name '*.html' -o -name '*.tmpl' \
-                   -o -name '*.css'  -o -name '*.js' \) \
-                -print0 | xargs -0 -n1 \
-                  sed -i.bak "s|${url}|./${fname}|g" || true
+              while IFS= read -r tf; do
+                [ -f "$tf" ] && sed -i "s|${url}|./${fname}|g" "$tf"
+              done < /tmp/template_files.txt
+              echo "rewrote ${url} → ./${fname}"
             done
+
+            # 4. Sanity check
+            echo "remaining CDN refs in templates:"
+            xargs cat < /tmp/template_files.txt \
+              | grep -E "pygame-web\.github\.io/cdn" || echo "  (none)"
           fi
 
-          # Sanity check — print what still references the CDN.
-          echo "Templates still referencing the CDN:"
-          grep -rE "pygame-web\.github\.io/cdn" "$TMPL_DIR" || echo "  (none)"
+      # ─── 4. Make sure project root has a pygbag.ini ───
+      # Memory recall: "pygbag build does not have a pygbag.ini configuration file"
+      - name: Create pygbag.ini if missing
+        run: |
+          cat > pygbag.ini <<'INI'
+          [pygbag]
+          name = Super Kid Saves the Planet
+          main = main.py
+          INI
+          cat pygbag.ini
 
+      # ─── 5. Build ───
       - name: Build web bundle
         run: |
-          pygbag --version 2>/dev/null || true
           pygbag --build .
 
-      - name: Inspect build output
+      - name: Pre-flight check
         run: |
-          echo "build/web contents:"
-          ls -la build/web | head -40
-          test -f build/web/index.html && echo "index.html present."
+          ls -la build/web | head -30
+          test -f build/web/index.html && echo "✓ index.html present"
 
-      # ------------------------------------------------------------------
-      # Stash assets we downloaded into the bundle too — the rewritten
-      # template will load `browserfs.min.js` etc. by relative URL.
-      # ------------------------------------------------------------------
-      - name: Copy local CDN assets into the bundle
+      # ─── 6. Copy locally-bundled CDN assets into the build folder
+      #         (so the rewritten templates can load them at runtime) ───
+      - name: Copy local CDN assets into bundle
         run: |
-          for f in browserfs.min.js pygame_*.js pygame_*.wasm pygame*.data *.js *.wasm 2>/dev/null; do
-            [ -f "$f" ] || continue
-            mkdir -p build/web
-            cp -v "$f" build/web/
+          mkdir -p build/web
+          for f in *.min.js *.wasm; do
+            [ -f "$f" ] && cp -v "$f" build/web/
           done
 
       - name: Upload Pages artifact
