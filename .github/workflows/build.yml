@@ -60,7 +60,8 @@ jobs:
               "git+https://github.com/pygame-web/pygbag.git"
             echo "installed pygbag from source"
           fi
-          python -c "import pygbag; print('installed:', pygbag.__version__)"
+          python -m pip show pygbag | head -3
+
 
       # ------------------------------------------------------------------
       # Manual CDN patch (memory recall #3).
