@@ -1,11 +1,8 @@
-build/
+venv/
+.venv/
 __pycache__/
 *.pyc
-*.pyo
-.idea/
+build/
+.pygbag_*
 .DS_Store
-Thumbs.db
-
-# Python virtual environment
-venv/
-fresh-venv/
+.idea/

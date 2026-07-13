@@ -1,0 +1,66 @@
+name: Build pygbag web bundle
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pygbag at the version known to work
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade --force-reinstall pygbag==0.9.2
+
+      # This step takes care of the pygbag CDN bug ("browserfs.min.js 404" class)
+      # by downloading the missing assets locally and rewriting the template to use them.
+      - name: Patch pygbag template to bundle CDN assets locally
+        run: |
+          python -c "import pygbag, os; t=os.path.dirname(pygbag.__file__) + '/templates'; print(t)"
+          # Find index.html / default.tmpl inside pygbag templates dir
+          # (printed path will tell us exactly where)
+          grep -r "pygame-web.github.io/cdn" $(python -c "import pygbag, os; print(os.path.dirname(pygbag.__file__) + '/templates')") -l | tee /tmp/files-to-patch.txt
+          # For each file, replace CDN URLs with relative ./asset references
+          while read f; do
+            # Pull down browserfs.min.js (and any other asset names you see)
+            curl -sL -o browserfs.min.js "https://pygame-web.github.io/cdn/v0/0.9.2/browserfs.min.js"
+            sed -i 's|https://pygame-web.github.io/cdn[^"]*browserfs\.min\.js|./browserfs.min.js|g' "$f"
+            sed -i 's|https://pygame-web.github.io/cdn[^"]*|./|g' "$f"
+          done < /tmp/files-to-patch.txt
+
+      - name: Build web bundle
+        run: pygbag --build .
+
+      - name: Make 'build/web' the artifact directory
+        run: |
+          ls -la build/web
+          test -f build/web/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

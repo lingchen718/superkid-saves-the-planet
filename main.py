@@ -631,12 +631,10 @@ class SuperKidsGame:
                 self._update_screen()
 
             pygame.display.flip()
-            await asyncio.sleep(0)
             self.clock.tick(self.settings.fps)
+            await asyncio.sleep(0)
 
     # ─────────────────────────────────────────
-
-
 
     #  INTRO SCREEN
     # ─────────────────────────────────────────
