@@ -127,12 +127,45 @@ jobs:
 
       # ─── 6. Copy locally-bundled CDN assets into the build folder
       #         (so the rewritten templates can load them at runtime) ───
-      - name: Copy local CDN assets into bundle
+      - name: Pre-bundle pygbag CDN assets locally and patch runtime index.html
         run: |
           mkdir -p build/web
-          for f in *.min.js *.wasm; do
-            [ -f "$f" ] && cp -v "$f" build/web/
+
+          # Hard-coded CDN asset list — known to be referenced by pygbag 0.9.x
+          CDN_BASE="https://pygame-web.github.io/cdn/v0/0.9.2"
+
+          # Download each known asset into build/web/ (where the runtime will look)
+          # Memory recall: download browserfs.min.js to project root, then copy into build/web
+          for asset in browserfs.min.js pygame_2.1.4.dev0.js pygame_2.1.4.dev0.wasm; do
+            url="$CDN_BASE/$asset"
+            if curl -fsSL "$url" -o "build/web/$asset"; then
+              echo "  ✓ $asset"
+            else
+              echo "  ✗ FAILED $url (continuing — game may still work without it)"
+            fi
           done
+
+          # ─── Patch runtime index.html to use local ./asset references ───
+          INDEX="build/web/index.html"
+          if [ ! -f "$INDEX" ]; then
+            echo "ERROR: build/web/index.html not found. Build step likely failed."
+            exit 1
+          fi
+
+          # Replace any http(s)://pygame-web.github.io/cdn/... references
+          # with ./asset-name so they load from the bundle
+          for asset in browserfs.min.js pygame_2.1.4.dev0.js pygame_2.1.4.dev0.wasm; do
+            sed -i "s|https\?://pygame-web\.github\.io/cdn[^\"']*/${asset}|\./${asset}|g" "$INDEX"
+            sed -i "s|https\?://pygame-web\.github\.io/cdn[^\"']*|\./${asset}|g" "$INDEX"
+          done
+
+          echo "─────────────────────────────────────"
+          echo "Remaining CDN refs in bundle index.html:"
+          grep -E "pygame-web\.github\.io/cdn" "$INDEX" | head -5 || echo "  (none)"
+          echo "─────────────────────────────────────"
+          echo "Bundle contents:"
+          ls -la build/web/
+      
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
