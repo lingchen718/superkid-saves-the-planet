@@ -41,6 +41,12 @@ jobs:
           fi
           python -m pip show pygbag | head -3
 
+      - name: Pre-bundle pygbag archive assets locally
+        run: python patch_cdn.py
+
+      - name: Strip stray APK from bundle
+        run: rm -f build/web/*.apk
+
       # ─── 2. Discover where pygbag's templates actually live ───
       - name: Locate pygbag templates
         id: locate_templates
