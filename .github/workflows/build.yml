@@ -29,11 +29,15 @@ jobs:
 
       # Memory: pip install --upgrade silently keeps 0.9.3 (the buggy one).
       # Always --force-reinstall pygbag==0.9.2.
-      - name: Install pygbag (dev-source build per memory's fix chain)
+      - name:
+          Install pygbag (memory: 0.9.2 for build/deploy)
         run: |
           python -m pip install --upgrade pip
-          pip install --force-reinstall "git+https://github.com/pygame-web/pygbag.git"
-          python -m pip show pygbag || true
+          pip install --force-reinstall pygbag==0.9.2
+          pip show pygbag | head -3 || true
+      
+      
+      
       
       
 

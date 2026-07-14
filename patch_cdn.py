@@ -124,10 +124,12 @@ def main():
             print(f"  skipping (not a file ref): {url}")
             continue
 
-        dest = os.path.join(ASSET_DIR, rel)
-        if os.path.isabs(dest) or not dest.startswith(
-            os.path.abspath(ASSET_DIR) + os.sep
-        ):
+        dest = os.path.normpath(os.path.join(ASSET_DIR, rel))
+        # Only refuse if the resolved dest escapes ASSET_DIR. A clean rel
+        # like 'browserfs.min.js' yields 'build/web/browserfs.min.js', always
+        # inside ASSET_DIR — no reason to refuse.
+        bundle_root = os.path.abspath(ASSET_DIR)
+        if not os.path.abspath(dest).startswith(bundle_root + os.sep):
             print(f"  skipping (refuses to write outside bundle): {rel}")
             continue
 

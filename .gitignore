@@ -6,3 +6,17 @@ build/
 .pygbag_*
 .DS_Store
 .idea/
+
+# Local environment and bytecode (memory: user's project includes venv/)
+venv/
+__pycache__/
+*.pyc
+
+# Build artifacts
+build/
+.pygbag_*
+
+# APK / Buildozer leftovers (memory: APK path is abandoned)
+.buildozer/
+bin/
+*.apk
