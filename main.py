@@ -145,10 +145,10 @@ ECO_QUIZZES = [
 
 MATH_QUIZZES = [
     {
-        "question": "What is 10 + 3?",
-        "options":  ["A: 12", "B: 13", "C: 14"],
+        "question": "What is 36 + 3?",
+        "options":  ["A: 38", "B: 39", "C: 40"],
         "answer":   1,
-        "hint":     "Add: 10 plus 3 equals 13. Good counting!",
+        "hint":     "Add: 36 plus 3 equals 39. Good counting!",
     },
     {
         "question": "If you have 15 apples and eat 4, how many left?",
@@ -157,10 +157,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 15 minus 4 equals 11. Yummy apples!",
     },
     {
-        "question": "What is 12 + 6?",
-        "options":  ["A: 17", "B: 18", "C: 19"],
+        "question": "What is 18 + 6?",
+        "options":  ["A: 23", "B: 24", "C: 25"],
         "answer":   1,
-        "hint":     "Add: 12 plus 6 equals 18. Keep going!",
+        "hint":     "Add: 18 plus 6 equals 24. Keep going!",
     },
     {
         "question": "You have 20 toys. Give away 5. How many now?",
@@ -169,10 +169,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 20 minus 5 equals 15. Fun toys!",
     },
     {
-        "question": "What is 11 + 4?",
-        "options":  ["A: 14", "B: 15", "C: 16"],
-        "answer":   1,
-        "hint":     "Add: 11 plus 4 equals 15. Nice work!",
+        "question": "What is 19 + 4?",
+        "options":  ["A: 23", "B: 24", "C: 25"],
+        "answer":   0,
+        "hint":     "Add: 19 plus 4 equals 23. Nice work!",
     },
     {
         "question": "If you have 16 candies and share 3, how many left?",
@@ -181,10 +181,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 16 minus 3 equals 13. Sweet sharing!",
     },
     {
-        "question": "What is 14 + 2?",
-        "options":  ["A: 15", "B: 16", "C: 17"],
+        "question": "What is 14 + 8?",
+        "options":  ["A: 15", "B: 22", "C: 17"],
         "answer":   1,
-        "hint":     "Add: 14 plus 2 equals 16. Easy one!",
+        "hint":     "Add: 14 plus 8 equals 22. Easy one!",
     },
     {
         "question": "You have 19 books. Read 6. How many left?",
@@ -193,10 +193,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 19 minus 6 equals 13. Read more!",
     },
     {
-        "question": "What is 13 + 5?",
-        "options":  ["A: 17", "B: 18", "C: 19"],
+        "question": "What is 18 + 15?",
+        "options":  ["A: 30", "B: 33", "C: 36"],
         "answer":   1,
-        "hint":     "Add: 13 plus 5 equals 18. Great job!",
+        "hint":     "Add: 18 plus 15 equals 33. Great job!",
     },
     {
         "question": "If you have 17 balls and lose 5, how many now?",
@@ -205,10 +205,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 17 minus 5 equals 12. Bounce on!",
     },
     {
-        "question": "What is 15 + 3?",
-        "options":  ["A: 17", "B: 18", "C: 19"],
+        "question": "What is 15 + 3 + 6?",
+        "options":  ["A: 22", "B: 24", "C: 26"],
         "answer":   1,
-        "hint":     "Add: 15 plus 3 equals 18. Count up!",
+        "hint":     "Equals 24. Count up!",
     },
     {
         "question": "You have 18 flowers. Pick 7. How many left?",
@@ -217,22 +217,22 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 18 minus 7 equals 11. Pretty flowers!",
     },
     {
-        "question": "What is 10 + 8?",
-        "options":  ["A: 17", "B: 18", "C: 19"],
+        "question": "What is 21 + 8 + 1?",
+        "options":  ["A: 29", "B: 30", "C: 31"],
         "answer":   1,
-        "hint":     "Add: 10 plus 8 equals 18. Well done!",
+        "hint":     "Equals 30. Well done!",
     },
     {
-        "question": "If you have 14 dogs and add 2 more, how many?",
-        "options":  ["A: 15", "B: 16", "C: 17"],
-        "answer":   1,
-        "hint":     "Add: 14 plus 2 equals 16. Happy dogs!",
+        "question": "What is 30 + 8 + 2?",
+        "options":  ["A: 36", "B: 38", "C: 40"],
+        "answer":   2,
+        "hint":     "Equals 40. Happy dogs!",
     },
     {
-        "question": "What is 16 - 5?",
-        "options":  ["A: 10", "B: 11", "C: 12"],
+        "question": "What is 20 - 5 - 1?",
+        "options":  ["A: 16", "B: 14", "C: 13"],
         "answer":   1,
-        "hint":     "Subtract: 16 minus 5 equals 11. Think step by step!",
+        "hint":     "Equals 14. Think step by step!",
     },
     {
         "question": "You have 12 pencils. Use 3. How many left?",
@@ -241,22 +241,22 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 12 minus 3 equals 9. Draw away!",
     },
     {
-        "question": "What is 19 + 1?",
-        "options":  ["A: 18", "B: 19", "C: 20"],
+        "question": "What is 19 + 10 + 1?",
+        "options":  ["A: 28", "B: 29", "C: 30"],
         "answer":   2,
-        "hint":     "Add: 19 plus 1 equals 20. Almost there!",
+        "hint":     "Equals 30. Almost there!",
     },
     {
-        "question": "If you have 13 birds and 4 fly away, how many?",
+        "question": "13 birds on the tree,4 fly away, how many left?",
         "options":  ["A: 8", "B: 9", "C: 10"],
         "answer":   1,
         "hint":     "Subtract: 13 minus 4 equals 9. Birds sing!",
     },
     {
-        "question": "What is 11 + 7?",
-        "options":  ["A: 16", "B: 17", "C: 18"],
+        "question": "What is 11 + 7 + 3?",
+        "options":  ["A: 19", "B: 20", "C: 21"],
         "answer":   2,
-        "hint":     "Add: 11 plus 7 equals 18. Fly high!",
+        "hint":     "Equals 21. Fly high!",
     },
     {
         "question": "You have 20 stars. Color 6. How many left?",
@@ -265,10 +265,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 20 minus 6 equals 14. Shiny stars!",
     },
     {
-        "question": "What is 15 - 6?",
-        "options":  ["A: 8", "B: 9", "C: 10"],
+        "question": "What is 25 - 6?",
+        "options":  ["A: 18", "B: 19", "C: 20"],
         "answer":   1,
-        "hint":     "Subtract: 15 minus 6 equals 9. Count down!",
+        "hint":     "Eequals 19. Count down!",
     },
     {
         "question": "If you have 14 cakes and eat 5, how many now?",
@@ -277,10 +277,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 14 minus 5 equals 9. Tasty cakes!",
     },
     {
-        "question": "What is 12 + 4?",
-        "options":  ["A: 16", "B: 17", "C: 18"],
+        "question": "What is 12 + 14?",
+        "options":  ["A: 26", "B: 27", "C: 28"],
         "answer":   0,
-        "hint":     "Add: 12 plus 4 equals 16. Sweet treat!",
+        "hint":     "Equals 26. Sweet treat!",
     },
     {
         "question": "You have 17 fish. Catch 3. How many left?",
@@ -289,10 +289,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 17 minus 3 equals 14. Swim on!",
     },
     {
-        "question": "What is 18 + 2?",
-        "options":  ["A: 20", "B: 21", "C: 22"],
+        "question": "What is 38 + 8?",
+        "options":  ["A: 46", "B: 47", "C: 48"],
         "answer":   0,
-        "hint":     "Add: 18 plus 2 equals 20. Big number!",
+        "hint":     "Equals 46. Big number!",
     },
     {
         "question": "If you have 10 bananas and add 6, how many?",
@@ -301,10 +301,10 @@ MATH_QUIZZES = [
         "hint":     "Add: 10 plus 6 equals 16. Healthy snack!",
     },
     {
-        "question": "What is 13 - 7?",
-        "options":  ["A: 6", "B: 7", "C: 8"],
+        "question": "What is 23 - 7?",
+        "options":  ["A: 16", "B: 17", "C: 18"],
         "answer":   0,
-        "hint":     "Subtract: 13 minus 7 equals 6. Peel it!",
+        "hint":     "Equals 16. Peel it!",
     },
     {
         "question": "You have 19 cars. Park 8. How many left?",
@@ -313,10 +313,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 19 minus 8 equals 11. Vroom!",
     },
     {
-        "question": "What is 16 + 3?",
-        "options":  ["A: 17", "B: 18", "C: 19"],
+        "question": "What is 56 + 3?",
+        "options":  ["A: 57", "B: 58", "C: 59"],
         "answer":   2,
-        "hint":     "Add: 16 plus 3 equals 19. Drive safe!",
+        "hint":     "Equals 59. Drive safe!",
     },
     {
         "question": "If you have 11 dolls and buy 5 more, how many?",
@@ -325,10 +325,10 @@ MATH_QUIZZES = [
         "hint":     "Add: 11 plus 5 equals 16. Play time!",
     },
     {
-        "question": "What is 20 - 8?",
-        "options":  ["A: 10", "B: 11", "C: 12"],
+        "question": "What is 80 - 8?",
+        "options":  ["A: 70", "B: 71", "C: 72"],
         "answer":   2,
-        "hint":     "Subtract: 20 minus 8 equals 12. Number fun!",
+        "hint":     "Equals 72. Number fun!",
     },
     {
         "question": "You have 15 eggs. Use 4. How many left?",
@@ -337,10 +337,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 15 minus 4 equals 11. Bake on!",
     },
     {
-        "question": "What is 14 + 5?",
-        "options":  ["A: 17", "B: 18", "C: 19"],
+        "question": "What is 84 + 5?",
+        "options":  ["A: 87", "B: 88", "C: 93"],
         "answer":   2,
-        "hint":     "Add: 14 plus 5 equals 19. Egg-cellent!",
+        "hint":     "Equals 93. Egg-cellent!",
     },
     {
         "question": "If you have 12 kites and 3 break, how many now?",
@@ -349,10 +349,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 12 minus 3 equals 9. Fly high!",
     },
     {
-        "question": "What is 17 + 1?",
-        "options":  ["A: 18", "B: 19", "C: 20"],
+        "question": "What is 47 + 1?",
+        "options":  ["A: 48", "B: 59", "C: 60"],
         "answer":   0,
-        "hint":     "Add: 17 plus 1 equals 18. Windy day!",
+        "hint":     "Equals 48. Windy day!",
     },
     {
         "question": "You have 18 buttons. Lose 6. How many left?",
@@ -361,10 +361,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 18 minus 6 equals 12. Sew it up!",
     },
     {
-        "question": "What is 10 + 9?",
-        "options":  ["A: 19", "B: 20", "C: 21"],
+        "question": "What is 80 + 9?",
+        "options":  ["A: 89", "B: 90", "C: 91"],
         "answer":   0,
-        "hint":     "Add: 10 plus 9 equals 19. Button fun!",
+        "hint":     "Equals 89. Button fun!",
     },
     {
         "question": "If you have 13 chairs and add 4, how many?",
@@ -373,10 +373,10 @@ MATH_QUIZZES = [
         "hint":     "Add: 13 plus 4 equals 17. Sit down!",
     },
     {
-        "question": "What is 15 - 2?",
-        "options":  ["A: 13", "B: 14", "C: 15"],
+        "question": "What is 55 - 2?",
+        "options":  ["A: 53", "B: 54", "C: 55"],
         "answer":   0,
-        "hint":     "Subtract: 15 minus 2 equals 13. Chair time!",
+        "hint":     "Equals 53. Chair time!",
     },
     {
         "question": "You have 19 hats. Give 7 away. How many now?",
@@ -385,10 +385,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 19 minus 7 equals 12. Hat party!",
     },
     {
-        "question": "What is 11 + 6?",
-        "options":  ["A: 15", "B: 16", "C: 17"],
+        "question": "What is 45 + 6?",
+        "options":  ["A: 49", "B: 50", "C: 51"],
         "answer":   2,
-        "hint":     "Add: 11 plus 6 equals 17. Cover up!",
+        "hint":     "Equals 51. Cover up!",
     },
     {
         "question": "If you have 16 spoons and use 5, how many left?",
@@ -397,10 +397,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 16 minus 5 equals 11. Eat up!",
     },
     {
-        "question": "What is 12 - 3?",
-        "options":  ["A: 11", "B: 10", "C: 9"],
+        "question": "What is 42 - 3?",
+        "options":  ["A: 37", "B: 38", "C: 39"],
         "answer":   2,
-        "hint":     "Subtract: 12 minus 3 equals 9. Spoon fun!",
+        "hint":     "Equals 39. Spoon fun!",
     },
     {
         "question": "You have 14 clocks. Set 2. How many left?",
@@ -412,7 +412,7 @@ MATH_QUIZZES = [
         "question": "What is 18 + 6?",
         "options":  ["A: 17", "B: 18", "C: 24"],
         "answer":   2,
-        "hint":     "Add: 18 plus 0 equals 18. Time flies!",
+        "hint":     "Equals 24. Time flies!",
     },
     {
         "question": "If you have 20 leaves and pick 9, how many?",
@@ -421,10 +421,10 @@ MATH_QUIZZES = [
         "hint":     "Subtract: 20 minus 9 equals 11. Fall leaves!",
     },
     {
-        "question": "What is 13 + 8?",
-        "options":  ["A: 16", "B: 17", "C: 21"],
+        "question": "What is 33 + 8?",
+        "options":  ["A: 43", "B: 42", "C: 41"],
         "answer":   2,
-        "hint":     "Add: 13 plus 4 equals 17. Leaf pile!",
+        "hint":     "Equals 41. Leaf pile!",
     },
     {
         "question": "You have 10 windows. Open 1 more. How many open?",
@@ -433,10 +433,10 @@ MATH_QUIZZES = [
         "hint":     "Add: 10 plus 1 equals 11. Fresh air!",
     },
     {
-        "question": "What is 17 - 4 - 3?",
-        "options":  ["A: 10", "B: 13", "C: 14"],
+        "question": "What is 27 - 4 - 3?",
+        "options":  ["A: 20", "B: 23", "C: 24"],
         "answer":   0,
-        "hint":     "Subtract: 17 minus 4  minus 3 equals 10. Window view!",
+        "hint":     "Equals 20. Window view!",
     },
 ]
 
@@ -581,6 +581,7 @@ class SuperKidsGame:
         # ── Game state ────────────────────────────────────────────
         self.stats.game_active = False
         self.play_button       = Button(self, "Start Game")
+        self.restart_button = Button(self, "Play Again")
         self.game_won          = False
         self.running = True
 
@@ -1166,9 +1167,9 @@ class SuperKidsGame:
     # ─────────────────────────────────────────
 
     def _check_events(self):
-        """Process pygame events for the current game state."""
+        """Process pygame events — dispatch by game state."""
         for event in pygame.event.get():
-            # ── Intro screen: any tap or click starts the game ──
+            # Intro screen — any tap starts the game
             if self.game_state == "intro":
                 if event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
                     self._start_game()
@@ -1179,22 +1180,36 @@ class SuperKidsGame:
                     self._start_game()
                     continue
 
-            # ── Quiz active: handle clicks via _check_quiz_click ──
+            # Active quiz — answer tap or key
             if getattr(self, "quiz_active", False):
                 if event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
                     self._check_quiz_click(event)
                     continue
-                if event.type == pygame.KEYDOWN:
-                    # Keyboard A/B/C handling already exists
-                    if event.key in (pygame.K_a, pygame.K_b, pygame.K_c):
-                        self._check_quiz_keydown(event)
-                        continue
+                if event.type == pygame.KEYDOWN and event.key in (pygame.K_a, pygame.K_b, pygame.K_c):
+                    self._check_quiz_keydown(event)
+                    continue
 
-            # ── Standard keyboard handling for the rest ──
+            # Game-over screen — restart button click/tap
+            if self.game_state == "gameover":
+                if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_r):
+                    self._start_game()
+                    continue
+                if event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+                    # Map touch to (x,y) and route through _check_play_button
+                    pos = getattr(event, "pos", None)
+                    if pos is None:
+                        w, h = self.screen.get_size()
+                        pos = (int(event.x * w), int(event.y * h))
+                    self._check_play_button(pos)
+                    continue
+
+            # Standard keyboard / mouse flow during play
             if event.type == pygame.KEYDOWN:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self._check_play_button(event.pos)
 
     def _start_game(self):
         """Transition from intro to gameplay."""
@@ -1218,8 +1233,19 @@ class SuperKidsGame:
         pygame.mouse.set_visible(False)
 
     def _check_play_button(self, mouse_pos):
-        if self.play_button.rect.collidepoint(mouse_pos) and not self.stats.game_active:
+        """Click handler that knows about all in-game buttons."""
+        if self.stats.game_active:
+            return  # only handle clicks when no game is in progress
+
+        # Restart button on game-over screen?
+        if hasattr(self, "restart_button") and self.restart_button.rect.collidepoint(mouse_pos):
             self._start_game()
+            return
+
+        # Default play button (intro / first launch)
+        if hasattr(self, "play_button") and self.play_button.rect.collidepoint(mouse_pos):
+            self._start_game()
+            return
 
     def _check_keydown_events(self, event):
         # From intro screen: Enter or Space starts the game
