@@ -1,18 +1,18 @@
-"""Mirror pygbag runtime CDN assets locally from the GitHub raw archive.
+"""Mirror pygbag 0.9.2 runtime CDN assets from raw.githubusercontent.com.
 
-The dev pygbag (0.9.4) ships no runtime assets in the Python package —
-the runtime is served from pygame-web.github.io/archives/0.9/ at iPad
-boot, but the GitHub Pages URLs intermittently return 'Connection reset
-by peer' or 404 errors. The raw.githubusercontent.com URLs return 200
-reliably for every file. We mirror from raw.githubusercontent.com and
-rewrite index.html to use only ./ relative paths.
+Pygbag 0.9.2 emits these URLs in built index.html:
+    https://pygame-web.github.io/archives/0.9/<rel>
+    https://pygame-web.github.io/archives/0.9//<rel>   (known double-slash bug)
+
+The CDN intermittently 404s the doubled-slash variant and serves the rest
+slowly. We mirror each unique asset from the raw GitHub archive and rewrite
+index.html so every URL becomes a ./relative path.
 
 Memory anchor: 'download missing CDN files into the project root and patch
 the template index.html script src tags to point at local files. Pattern:
 search the template index.html for any <script src> or <link href>
 pointing to pygame-web.github.io/cdn and replace with relative paths.'
 """
-import glob
 import os
 import re
 import sys
@@ -23,27 +23,30 @@ INDEX_PATH = "build/web/index.html"
 ASSET_DIR = "build/web"
 RAW_BASE = "https://raw.githubusercontent.com/pygame-web/archives/main/0.9"
 
-# Match any pygbag archive URL — handles 0.9, 0.10, etc. consistently.
-CDN_RE = re.compile(r"https?://pygame-web\.github\.io/archives/[0-9.]+/[^\"' )]+")
+# Match any pygbag archive CDN reference. .*? is non-greedy to capture up
+# to the first quote/whitespace; the version segment is whatever pygbag emitted.
+CDN_RE = re.compile(
+    r"https?://pygame-web\.github\.io/archives/[^/\"' )]+/[^\"' )]+"
+)
 
 
 def normalize_url(url):
-    """Collapse any doubled slashes after archives/0.9/ (the 0.9.x bug)."""
-    return re.sub(r"(/archives/[0-9.]+)/+", r"\1/", url)
+    """Collapse doubled slashes after the version segment — this is the
+    0.9.x pygbag bug we explicitly look for."""
+    return re.sub(r"(/archives/[^/]+)/+", r"\1/", url)
 
 
 def rel_from_cdn(url):
-    """Extract the relative path inside 'archives/X.Y/...', e.g. 'vt/vtx.js'."""
-    parts = re.split(r"/archives/[0-9.]+/", url, maxsplit=1)
+    """Map 'https://...archives/0.9/vt/xterm.js' -> 'vt/xterm.js'."""
+    parts = re.split(r"/archives/[^/]+/", url, maxsplit=1)
     if len(parts) != 2:
         return None
-    rel = parts[1]
-    rel = re.sub(r"/+", "/", rel)
+    rel = re.sub(r"/+", "/", parts[1])
     return rel
 
 
 def fetch(url, dest):
-    """Fetch url to dest, creating parent dirs. Returns True on success."""
+    """Download url to dest, creating parent dirs. Returns True on success."""
     try:
         os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
         with urllib.request.urlopen(url, timeout=30) as r:
@@ -59,9 +62,7 @@ def fetch(url, dest):
 
 
 def safe_fetch(rel):
-    """Mirror a file from the raw archive (relative path)."""
-    if not rel:
-        return False
+    """Mirror a file from the raw GitHub archive (relative path)."""
     src = f"{RAW_BASE}/{rel}"
     dest = os.path.join(ASSET_DIR, rel)
     return fetch(src, dest)
@@ -101,28 +102,34 @@ def main():
             with open(INDEX_PATH, encoding="utf-8") as fp:
                 html = fp.read()
             local_path = "./" + rel
-            new_html = html.replace(url, local_path)
+            new_html = html
             for u0 in raw_urls:
-                if normalize_url(u0) == url:
+                if normalize_url(u0) == normalize_url(url):
                     new_html = new_html.replace(u0, local_path)
             if new_html != html:
                 with open(INDEX_PATH, "w", encoding="utf-8") as fp:
                     fp.write(new_html)
                 print(f"  rewrote -> {local_path}")
 
-    # ── Pass 2: pre-mirror known transitive runtime deps ──
-    # The iPad's browser pulls these dynamically via ES module imports.
+    # ── Pass 2: pre-mirror known runtime deps so dynamic ES module imports
+    #    (vtx.js etc.) resolve locally without re-fetching the CDN at boot. ──
     transitive = [
         "vtx.js",
         "browserfs.min.js",
         "pythons.js",
         "empty.html",
+        "empty.ogg",
+        "favicon.ico",
+        "favicon.png",
+        "default.tmpl",
+        "noctx.tmpl",
         "pythonrc.py",
         "cpythonrc.py",
+        "pkpyrc.py",
         "banner.png",
         "bind.c",
         "bind.js",
-        "vt/vtx.js",
+        "index.html",
         "vt/xterm.js",
         "vt/xterm.css",
         "vt/xterm-addon-image.js",
@@ -142,7 +149,6 @@ def main():
                 fp.write("// placeholder\n")
             print(f"  wrote placeholder: {dest}")
 
-    # ── Final report ──
     with open(INDEX_PATH, encoding="utf-8") as fp:
         html = fp.read()
     remaining = sorted(set(CDN_RE.findall(html)))
