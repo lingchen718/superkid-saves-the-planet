@@ -57,17 +57,19 @@ jobs:
         run: |
           echo "---- bundle/web/ contents ----"
           ls -la build/web/
-          ls -la build/web/vt/ 2>/dev/null || echo "(no vt subdir yet)"
+          ls -la build/web/vt/ 2>/dev/null || echo "(no vt subdir)"
+
           echo "---- remaining CDN refs ----"
-          if grep -q "pygame-web\.github\.io/archives/0\.9/" \
-                build/web/index.html; then
-            echo "STILL HAS REFS:"
-            grep -oE "https?://pygame-web\.github\.io/archives/0\.9/[^\"' )]+" \
-              build/web/index.html | sort -u
+          REMAINING="$(grep -oE "https?://pygame-web\.github\.io/archives/0\.9/[^\"' )]+" \
+                       build/web/index.html 2>/dev/null | sort -u || true)"
+          if [ -n "$REMAINING" ]; then
+            echo "FAIL: index.html still references the CDN:"
+            echo "$REMAINING"
             exit 1
           else
-            echo "all local"
+            echo "all local — iPad safe"
           fi
+
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

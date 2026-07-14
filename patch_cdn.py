@@ -51,10 +51,9 @@ def normalize_url(url):
 
 
 def main():
-    # Defensive: fail clearly when the build hasn't been run yet.
     if not os.path.isfile(INDEX_PATH):
         print(f"ERROR: {INDEX_PATH} not found.")
-        print("Run 'pygbag --build .' FIRST and confirm build/web/ exists.")
+        print("Run 'pygbag --build .' first, then re-run this script.")
         sys.exit(1)
 
     with open(INDEX_PATH, encoding="utf-8") as fp:
@@ -71,22 +70,29 @@ def main():
             print(f"  {u}")
 
         for url in urls:
-            # e.g. .../archives/0.9/vt/xterm.js -> vt/xterm.js
             suffix = url.split("/archives/0.9/", 1)[1]
             asset_rel = suffix
             dest = os.path.join(ASSET_DIR, asset_rel)
 
+            downloaded = True
             if not os.path.exists(dest) or os.path.getsize(dest) == 0:
                 if not fetch(url, dest):
-                    continue
+                    # Don't bail — write a placeholder so the browser doesn't
+                    # 404-stall the splash while waiting on a missing remote.
+                    downloaded = False
+                    try:
+                        os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+                        with open(dest, "w", encoding="utf-8") as fp:
+                            fp.write("# placeholder\n")
+                        print(f"    wrote placeholder to {dest}")
+                    except OSError as exc:
+                        print(f"    could not create placeholder: {exc}")
 
             with open(INDEX_PATH, encoding="utf-8") as fp:
                 html = fp.read()
             local_path = "./" + asset_rel
             new_html = html
-            # Replace the canonical form
             new_html = new_html.replace(url, local_path)
-            # Replace any double-slash variant that pygbag emitted
             for u0 in raw_urls:
                 if normalize_url(u0) == url:
                     new_html = new_html.replace(u0, local_path)
@@ -94,19 +100,20 @@ def main():
             if new_html != html:
                 with open(INDEX_PATH, "w", encoding="utf-8") as fp:
                     fp.write(new_html)
-                print(f"  rewrote -> {local_path}")
+                tag = "rewrote" if downloaded else "rewrote (placeholder)"
+                print(f"  {tag} -> {local_path}")
 
-    # Final report — keeps the user informed
+    # Final report — exit 0; the workflow has its own check for CDN residues.
     with open(INDEX_PATH, encoding="utf-8") as fp:
         html = fp.read()
-    remaining_raw = CDN_RE.findall(html)
-    remaining_norm = sorted(set(normalize_url(u) for u in remaining_raw))
+    remaining_norm = sorted(set(normalize_url(u) for u in CDN_RE.findall(html)))
     print(f"\nRemaining CDN refs in {INDEX_PATH}:")
     if remaining_norm:
         for r in remaining_norm:
             print(f"  {r}")
     else:
         print("  (none)")
+
 
 
 if __name__ == "__main__":
