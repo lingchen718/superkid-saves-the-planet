@@ -1166,37 +1166,35 @@ class SuperKidsGame:
     # ─────────────────────────────────────────
 
     def _check_events(self):
+        """Process pygame events for the current game state."""
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-            elif event.type == pygame.KEYDOWN:
-                # ── ENTER on intro → start game ───────────────────
-                if self.game_state == "intro" and event.key == pygame.K_RETURN:
+            # ── Intro screen: any tap or click starts the game ──
+            if self.game_state == "intro":
+                if event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
                     self._start_game()
-                # ── ENTER on win screen → quit ────────────────────
-                elif self.game_state == "won" and event.key == pygame.K_RETURN:
-                    pygame.quit()
-                    sys.exit()
-                # ── Normal gameplay keys ───────────────────────────
-                elif self.game_state == "playing":
-                    if self.quiz_active:
+                    continue
+                if event.type == pygame.KEYDOWN and event.key in (
+                        pygame.K_RETURN, pygame.K_SPACE
+                ):
+                    self._start_game()
+                    continue
+
+            # ── Quiz active: handle clicks via _check_quiz_click ──
+            if getattr(self, "quiz_active", False):
+                if event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+                    self._check_quiz_click(event)
+                    continue
+                if event.type == pygame.KEYDOWN:
+                    # Keyboard A/B/C handling already exists
+                    if event.key in (pygame.K_a, pygame.K_b, pygame.K_c):
                         self._check_quiz_keydown(event)
-                    else:
-                        self._check_keydown_events(event)
+                        continue
 
+            # ── Standard keyboard handling for the rest ──
+            if event.type == pygame.KEYDOWN:
+                self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
-                if self.game_state == "playing" and not self.quiz_active:
-                    self._check_keyup_events(event)
-
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = pygame.mouse.get_pos()
-                if self.game_state == "playing":
-                    if self.quiz_active:
-                        self._check_quiz_click(mouse_pos)
-                    else:
-                        self._check_play_button(mouse_pos)
+                self._check_keyup_events(event)
 
     def _start_game(self):
         """Transition from intro to gameplay."""
@@ -1224,6 +1222,12 @@ class SuperKidsGame:
             self._start_game()
 
     def _check_keydown_events(self, event):
+        # From intro screen: Enter or Space starts the game
+        if self.game_state == "intro":
+            if event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self._start_game()
+                return
+
         if event.key == pygame.K_RIGHT:
             self.kid.moving_right = True
         elif event.key == pygame.K_LEFT:
@@ -1252,13 +1256,28 @@ class SuperKidsGame:
             self.quiz_sound.play()
         pygame.mouse.set_visible(True)
 
-    def _check_quiz_click(self, mouse_pos):
+    def _check_quiz_click(self, event_or_pos):
+        """Single source of truth for tap-or-click on quiz answers."""
+        # Accept either an event with .pos or .x/.y or a tuple
+        if hasattr(event_or_pos, "pos") and event_or_pos.pos:
+            pos = event_or_pos.pos
+        elif hasattr(event_or_pos, "x"):
+            # FINGERDOWN event — x and y are normalised 0–1
+            w, h = self.screen.get_size()
+            pos = (int(event_or_pos.x * w), int(event_or_pos.y * h))
+        elif isinstance(event_or_pos, tuple):
+            pos = event_or_pos
+        else:
+            return  # unknown event, ignore
+
         if self.quiz_result is not None:
             self._dismiss_quiz()
             return
+
         for i, rect in enumerate(self._quiz_option_rects):
-            if rect.collidepoint(mouse_pos):
+            if rect.collidepoint(pos):
                 self._evaluate_quiz(i)
+                return
 
     def _check_quiz_keydown(self, event):
         if self.quiz_result is not None:
