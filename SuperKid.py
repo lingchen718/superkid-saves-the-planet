@@ -115,6 +115,15 @@ class SuperKid:
         else:
             self.squash = 1.0
 
+        # Clamp to screen — fixes [PROJECTS] [active] line 7.
+        if self.rect.left < 0:
+            self.rect.left = 0
+            self.x = float(self.rect.x)
+        elif self.rect.right > self.screen_rect.right:
+            self.rect.right = self.screen_rect.right
+            self.x = float(self.rect.x)
+
+
         # -- Rebuild image with current effects --
         self._build_image()
 

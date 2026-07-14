@@ -1203,6 +1203,33 @@ class SuperKidsGame:
                     self._check_play_button(pos)
                     continue
 
+            # ── Mode C: touch drag (iPad / iPhone) — direct motion delta ──
+            # Memory [PROJECTS] [active] line 4: game must be playable on a phone.
+            # Memory [PROJECTS] [active] line 7: SuperKid gets stuck on edges.
+            # Fix: shift rect.centerx by finger motion; clamp to screen. No
+            # on/off state — lift finger = no motion = SuperKid stays put.
+            if event.type == pygame.FINGERDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                if event.type == pygame.FINGERDOWN:
+                    _w, _h = self.screen.get_size()
+                    self._last_touch_x = event.x * _w
+                else:
+                    self._last_touch_x = event.pos[0]
+
+            elif event.type == pygame.FINGERMOTION:
+                if getattr(self, '_last_touch_x', None) is not None:
+                    _w, _h = self.screen.get_size()
+                    cur_x = event.x * _w
+                    dx = cur_x - self._last_touch_x
+                    self._last_touch_x = cur_x
+                    # Shift SuperKid by the finger's motion this frame.
+                    new_x = self.kid.rect.centerx + int(dx)
+                    # Clamp to screen — fixes [PROJECTS] [active] line 7.
+                    new_x = max(0, min(new_x, self.screen_rect.right))
+                    self.kid.rect.centerx = new_x
+
+            elif event.type in (pygame.FINGERUP, pygame.MOUSEBUTTONUP):
+                self._last_touch_x = None
+
             # Standard keyboard / mouse flow during play
             if event.type == pygame.KEYDOWN:
                 self._check_keydown_events(event)
