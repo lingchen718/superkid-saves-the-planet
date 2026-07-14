@@ -4,13 +4,11 @@ on:
   push:
     branches: [ main ]
 
-# Pages needs explicit permissions to write the deployment
 permissions:
   contents: write
   pages: write
   id-token: write
 
-# Cancel any in-flight run when a new push arrives
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -19,159 +17,57 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           lfs: true
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # ─── 1. Install pygbag (memory recall: 0.9.2 is the older fallback
-      #         that predates the 0.9.3 browserfs.min.js CDN double-slash bug) ───
-      - name: Install pygbag (with fallback chain)
+      # Memory: pip install --upgrade silently keeps 0.9.3 (the buggy one).
+      # Always --force-reinstall pygbag==0.9.2.
+      - name: Install pygbag (force 0.9.2)
         run: |
           python -m pip install --upgrade pip
-          if python -m pip install --upgrade --force-reinstall pygbag==0.9.2; then
-            echo "PIP_VERSION_STATUS=ok"
-          else
-            python -m pip install --upgrade --force-reinstall \
-              "git+https://github.com/pygame-web/pygbag.git"
-            echo "PIP_VERSION_STATUS=git_source"
-          fi
-          python -m pip show pygbag | head -3
+          pip install --force-reinstall pygbag==0.9.2
+          pip show pygbag | head -3
 
-      - name: Pre-bundle pygbag archive assets locally
-        run: python patch_cdn.py
-
-      - name: Strip stray APK from bundle
-        run: rm -f build/web/*.apk
-
-      # ─── 2. Discover where pygbag's templates actually live ───
-      - name: Locate pygbag templates
-        id: locate_templates
-        run: |
-          PKG_DIR="$(python -c 'import pygbag, os; print(os.path.dirname(pygbag.__file__))')"
-          echo "PKG_DIR=$PKG_DIR"
-          # Find any .html / .tmpl inside the package
-          find "$PKG_DIR" -maxdepth 4 -type f \
-            \( -name '*.html' -o -name '*.tmpl' \) 2>/dev/null \
-            | tee /tmp/template_files.txt
-          echo "TEMPLATE_COUNT=$(wc -l < /tmp/template_files.txt)" >> "$GITHUB_OUTPUT"
-
-      # ─── 3. Pre-bundle pygbag CDN assets locally
-      #         Memory recall: "download missing CDN files into project root
-      #         and patch the template index.html script src tags to point
-      #         at local files. Pattern: search the template index.html
-      #         for any <script src> or <link href> pointing to
-      #         pygame-web.github.io/cdn and replace with relative paths." ───
-      - name: Patch pygbag template CDN URLs → local
-        run: |
-          if [ ! -s /tmp/template_files.txt ]; then
-            echo "No template files found — patch skipped."
-            exit 0
-          fi
-
-          # 1. Collect CDN URLs referenced in templates
-          ASSETS=$(xargs cat < /tmp/template_files.txt \
-                    | grep -hoE "https?://pygame-web\.github\.io/cdn[^'\" )\`]+" \
-                    | sort -u || true)
-
-          if [ -z "$ASSETS" ]; then
-            echo "No CDN URLs in templates — patch is a no-op."
-          else
-            echo "CDN URLs to pre-bundle:"
-            echo "$ASSETS"
-
-            # 2. Download each asset
-            echo "$ASSETS" | while IFS= read -r url; do
-              [ -z "$url" ] && continue
-              fname="${url##*/}"
-              if curl -fsSL "$url" -o "$fname"; then
-                echo "fetched $fname"
-              else
-                echo "FAILED to fetch $url"
-              fi
-            done
-
-            # 3. Patch templates to use relative paths
-            echo "$ASSETS" | while IFS= read -r url; do
-              [ -z "$url" ] && continue
-              fname="${url##*/}"
-              while IFS= read -r tf; do
-                [ -f "$tf" ] && sed -i "s|${url}|./${fname}|g" "$tf"
-              done < /tmp/template_files.txt
-              echo "rewrote ${url} → ./${fname}"
-            done
-
-            # 4. Sanity check
-            echo "remaining CDN refs in templates:"
-            xargs cat < /tmp/template_files.txt \
-              | grep -E "pygame-web\.github\.io/cdn" || echo "  (none)"
-          fi
-
-      # ─── 4. Make sure project root has a pygbag.ini ───
-      # Memory recall: "pygbag build does not have a pygbag.ini configuration file"
-      - name: Create pygbag.ini if missing
-        run: |
-          cat > pygbag.ini <<'INI'
-          [pygbag]
-          name = Super Kid Saves the Planet
-          main = main.py
-          INI
-          cat pygbag.ini
-
-      # ─── 5. Build ───
       - name: Build web bundle
         run: |
+          rm -rf build/
           pygbag --build .
 
-      - name: Pre-flight check
+      - name: Verify bundle
         run: |
-          ls -la build/web | head -30
-          test -f build/web/index.html && echo "✓ index.html present"
+          echo "PWD: $(pwd)"
+          ls -la build/ || (echo "build/ missing"; exit 1)
+          ls -la build/web/ || (echo "build/web/ missing"; exit 1)
+          test -f build/web/index.html && echo "index.html present" \
+            || (echo "index.html MISSING"; exit 1)
 
-      # ─── 6. Copy locally-bundled CDN assets into the build folder
-      #         (so the rewritten templates can load them at runtime) ───
-      - name: Pre-bundle pygbag CDN assets locally and patch runtime index.html
+      # Memory anchor: download CDN files into project root and rewrite
+      # index.html script src to point at local files.
+      - name: Pre-bundle CDN runtime assets
+        run: python patch_cdn.py
+
+      - name: Final sanity check
         run: |
-          mkdir -p build/web
-
-          # Hard-coded CDN asset list — known to be referenced by pygbag 0.9.x
-          CDN_BASE="https://pygame-web.github.io/cdn/v0/0.9.2"
-
-          # Download each known asset into build/web/ (where the runtime will look)
-          # Memory recall: download browserfs.min.js to project root, then copy into build/web
-          for asset in browserfs.min.js pygame_2.1.4.dev0.js pygame_2.1.4.dev0.wasm; do
-            url="$CDN_BASE/$asset"
-            if curl -fsSL "$url" -o "build/web/$asset"; then
-              echo "  ✓ $asset"
-            else
-              echo "  ✗ FAILED $url (continuing — game may still work without it)"
-            fi
-          done
-
-          # ─── Patch runtime index.html to use local ./asset references ───
-          INDEX="build/web/index.html"
-          if [ ! -f "$INDEX" ]; then
-            echo "ERROR: build/web/index.html not found. Build step likely failed."
-            exit 1
-          fi
-
-          # Replace any http(s)://pygame-web.github.io/cdn/... references
-          # with ./asset-name so they load from the bundle
-          for asset in browserfs.min.js pygame_2.1.4.dev0.js pygame_2.1.4.dev0.wasm; do
-            sed -i "s|https\?://pygame-web\.github\.io/cdn[^\"']*/${asset}|\./${asset}|g" "$INDEX"
-            sed -i "s|https\?://pygame-web\.github\.io/cdn[^\"']*|\./${asset}|g" "$INDEX"
-          done
-
-          echo "─────────────────────────────────────"
-          echo "Remaining CDN refs in bundle index.html:"
-          grep -E "pygame-web\.github\.io/cdn" "$INDEX" | head -5 || echo "  (none)"
-          echo "─────────────────────────────────────"
-          echo "Bundle contents:"
+          echo "---- bundle/web/ contents ----"
           ls -la build/web/
-      
+          ls -la build/web/vt/ 2>/dev/null || echo "(no vt subdir yet)"
+          echo "---- remaining CDN refs ----"
+          if grep -q "pygame-web\.github\.io/archives/0\.9/" \
+                build/web/index.html; then
+            echo "STILL HAS REFS:"
+            grep -oE "https?://pygame-web\.github\.io/archives/0\.9/[^\"' )]+" \
+              build/web/index.html | sort -u
+            exit 1
+          else
+            echo "all local"
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
