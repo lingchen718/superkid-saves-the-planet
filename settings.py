@@ -31,9 +31,9 @@ class SuperKidsSettings:
         self.speedup_scale = 1.4
 
         # 收集物品设置，好的加分，污染的减分
-        self.item_width = 60
-        self.item_height = 60
-        self.items_allowed = 15  # 同屏最多几个物品
+        self.item_width = 40
+        self.item_height = 40
+        self.items_allowed = 20  # 同屏最多几个物品
 
 
         # 分数设置
@@ -44,8 +44,8 @@ class SuperKidsSettings:
         self.game_mode = "polluted"              # 默认从白天模式开始
         self.clean_mode = False  # Default to pollute mode
 
-        self.polluted_item_fall_speed = 12       # polluted模式下的下落速度
-        self.clean_item_fall_speed = 12     # clean模式下的下落速度（更快）
+        self.polluted_item_fall_speed = 9       # polluted模式下的下落速度
+        self.clean_item_fall_speed = 10     # clean模式下的下落速度（更快）
 
         # --- Night Mode Trigger ---
         self.clean_mode_eco_threshold = 6   # 达到5个eco actions后切换到夜间模式
@@ -54,7 +54,7 @@ class SuperKidsSettings:
         """初始化随游戏进行而变化的设置"""
         self.kid_speed = 20
         self.falling_speed = self.polluted_item_fall_speed  # 开始时使用白天速度
-        self.items_allowed = 18
+        self.items_allowed = 28
         self.fleet_direction = -1
         self.game_mode = "polluted"  # 每次重新开始时重置为白天模式
 

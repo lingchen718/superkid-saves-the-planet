@@ -73,14 +73,19 @@ class SuperKid:
         """Update Steve's position and all animations."""
         is_moving = self.moving_right or self.moving_left
 
-        # -- Horizontal movement --
-        if self.moving_right and self.rect.right < self.screen_rect.right:
-            self.x += self.settings.kid_speed
-            self.facing_right = True
 
-        if self.moving_left and self.rect.left > 0:
-            self.x -= self.settings.kid_speed
-            self.facing_right = False
+        # -- Horizontal movement --
+        edge_pad = 12  # keep Steve's body inside the visible play area
+
+        if self.moving_right:
+            if self.rect.right + self.settings.kid_speed <= self.screen_rect.right - edge_pad:
+                self.x += self.settings.kid_speed
+                self.facing_right = True
+
+        if self.moving_left:
+            if self.rect.left - self.settings.kid_speed >= edge_pad:
+                self.x -= self.settings.kid_speed
+                self.facing_right = False
 
         self.rect.x = int(self.x)
 
