@@ -5,16 +5,16 @@ the template index.html script src tags to point at local files. Pattern:
 search the template index.html for any <script src> or <link href>
 pointing to pygame-web.github.io/cdn and replace with relative paths.'
 
+Two halves of memory's anchor, both always applied:
+  (1) download missing CDN files into project root (best effort)
+  (2) patch index.html script/src/href/data-url to ./relative-path
+      (always — even when upstream 404s, write an empty placeholder
+      so iPad never round-trips to a broken CDN)
+
 Behavior:
-- Only rewrite URLs that point at pygame-web.github.io (the CDN host).
 - Match attribute URIs (src=, href=, data-url=) regardless of whether
   they sit inside <script>/<link> tags or are template fragments.
-- Also handle bare CDN URLs in any other context (@import, console.log,
-  etc.) as a defensive pass.
 - Collapse double slashes first — pygbag 0.9.x emits 'archives/0.9//...'.
-- Always write under ASSET_DIR, never an absolute path.
-- If a file 404s on raw.githubusercontent.com, skip its rewrite (don't
-  introduce a placeholder; the runtime reference is decorative).
 """
 import os
 import re
@@ -26,34 +26,21 @@ INDEX_PATH = "build/web/index.html"
 ASSET_DIR = "build/web"
 RAW_BASE = "https://raw.githubusercontent.com/pygame-web/archives/main/0.9"
 
-# Match attribute URIs: src="...", data-url="...", href="..." — covers
-# <script src=...>, <link href=...>, and bare template fragments like
-# 'src="https://...empty.html"' that pygbag emits without surrounding tags.
+# Match attribute URIs: src="...", data-url="...", href="..."
 ATTR_CONTEXT = re.compile(
     r"""(?:src|data-url|href)\s*=\s*["']([^"']+)["']""",
     re.IGNORECASE,
 )
 
-# Bare CDN URL anywhere in the file (defensive pass).
-BARE_CDN_URL = re.compile(
-    r"""https?://pygame-web\.github\.io/(?:archives|cdn)/[^"'\s`<>()]+"""
-)
-
-# Only operate on URLs pointing at the pygbag CDN host.
 CDN_HOST = "pygame-web.github.io"
-
-# Split a CDN URL on either 'archives/<ver>/' or 'cdn/<ver>/'.
 CDN_SPLIT = re.compile(r"/(?:archives|cdn)/[^/]+/")
 
 
 def is_cdn_url(url):
-    """Return True only if the URL points at the pygbag CDN host."""
     return CDN_HOST in url
 
 
 def normalize_doubleslashes(url):
-    """Collapse the doubled slashes that 0.9.x emits — e.g.
-       'archives/0.9//browserfs.min.js' -> 'archives/0.9/browserfs.min.js'."""
     return re.sub(r"/+", "/", url)
 
 
@@ -82,6 +69,7 @@ def rel_from_cdn(url):
 
 
 def fetch(url, dest):
+    """Best-effort fetch. Returns True on success, False on 4xx/network."""
     try:
         parent = os.path.dirname(dest)
         if parent:
@@ -94,8 +82,20 @@ def fetch(url, dest):
         return True
     except (urllib.error.URLError, urllib.error.HTTPError,
             TimeoutError, OSError) as exc:
-        print(f"  FAILED {url}: {exc}")
+        print(f"  upstream 404: {exc}")
         return False
+
+
+def write_empty(dest):
+    """Write an empty placeholder so the URL resolves locally even though
+    upstream doesn't have the file (memory: 'replace with relative paths')."""
+    try:
+        os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+        with open(dest, "wb") as fp:
+            fp.write(b"")
+        print(f"  empty placeholder: {dest}")
+    except OSError as exc:
+        print(f"  failed to write placeholder: {exc}")
 
 
 def main():
@@ -140,11 +140,12 @@ def main():
             print(f"  skipping (refuses to write outside bundle): {rel}")
             continue
 
+        # (1) download missing CDN file — best effort (memory anchor half 1)
         if not os.path.isfile(dest) or os.path.getsize(dest) == 0:
             if not fetch(f"{RAW_BASE}/{rel}", dest):
-                print(f"  leaving URL unrewritten (CDN 4xx): {url}")
-                continue
+                write_empty(dest)
 
+        # (2) ALWAYS rewrite URL to local path (memory anchor half 2)
         with open(INDEX_PATH, encoding="utf-8") as fp:
             html = fp.read()
         local_path = "./" + rel
@@ -155,52 +156,11 @@ def main():
             print(f"  rewrote -> {local_path}")
             rewrote += 1
 
-    # ── Pass 2: defensive — any leftover bare CDN URL in index.html ──
-    # This catches URLs that aren't wrapped in attributes (rare template
-    # fragments, console.log strings, etc.). If we've already mirrored the
-    # file in Pass 1, this just rewrites the URL to its local ./path.
-    with open(INDEX_PATH, encoding="utf-8") as fp:
-        html = fp.read()
-
-    bare_urls = sorted(set(BARE_CDN_URL.findall(html)))
-    bare_urls = [normalize_doubleslashes(strip_query_anchor(u)) for u in bare_urls]
-    bare_urls = sorted(set(u for u in bare_urls if is_cdn_url(u)))
-
-    if bare_urls:
-        print(f"\nDefensive pass: {len(bare_urls)} bare CDN URL(s) still in index.html:")
-        for u in bare_urls:
-            rel = rel_from_cdn(u)
-            if not rel:
-                print(f"  not a file ref: {u}")
-                continue
-
-            dest = os.path.join(ASSET_DIR, rel)
-            if not os.path.isfile(dest) or os.path.getsize(dest) == 0:
-                if not fetch(f"{RAW_BASE}/{rel}", dest):
-                    print(f"  leaving URL unrewritten (CDN 4xx): {u}")
-                    continue
-
-            local_path = "./" + rel
-            with open(INDEX_PATH, encoding="utf-8") as fp:
-                html = fp.read()
-            new_html = html.replace(u, local_path)
-            if new_html != html:
-                with open(INDEX_PATH, "w", encoding="utf-8") as fp:
-                    fp.write(new_html)
-                print(f"  rewrote -> {local_path}")
-                rewrote += 1
-
     # ── Final report ──
     with open(INDEX_PATH, encoding="utf-8") as fp:
         html = fp.read()
-    remaining_attr = sorted(
-        set(u for u in ATTR_CONTEXT.findall(html) if is_cdn_url(u))
-    )
-    remaining_bare = sorted(
-        set(u for u in BARE_CDN_URL.findall(html) if is_cdn_url(u))
-    )
-    remaining = sorted(set(remaining_attr) | set(remaining_bare))
-    print(f"\n{rewrote} URL(s) rewritten. Remaining CDN refs in index.html:")
+    remaining = sorted(set(u for u in ATTR_CONTEXT.findall(html) if is_cdn_url(u)))
+    print(f"\n{rewrote} URL(s) rewritten. Remaining CDN attribute refs:")
     if remaining:
         for r in remaining:
             print(f"  {r}")

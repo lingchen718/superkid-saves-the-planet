@@ -17,3 +17,6 @@ build/
 # intentionally tracked and shipped as part of the web bundle.
 .buildozer/
 bin/
+
+# Local environment
+venv/
