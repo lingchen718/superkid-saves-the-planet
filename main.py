@@ -338,9 +338,9 @@ MATH_QUIZZES = [
     },
     {
         "question": "What is 84 + 5?",
-        "options":  ["A: 87", "B: 88", "C: 93"],
+        "options":  ["A: 87", "B: 88", "C: 89"],
         "answer":   2,
-        "hint":     "Equals 93. Egg-cellent!",
+        "hint":     "Equals 89. Egg-cellent!",
     },
     {
         "question": "If you have 12 kites and 3 break, how many now?",
@@ -1203,25 +1203,28 @@ class SuperKidsGame:
                     self._check_play_button(pos)
                     continue
 
-            # ── Mode C: touch drag (iPad / iPhone) — direct motion delta ──
-            # Memory [PROJECTS] [active] line 11: game must be playable on a phone.
-            if event.type == pygame.FINGERDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                if event.type == pygame.FINGERDOWN:
-                    _w, _h = self.screen.get_size()
-                    self._last_touch_x = event.x * _w
-                else:
-                    self._last_touch_x = event.pos[0]
-            elif event.type == pygame.FINGERMOTION:
-                if getattr(self, '_last_touch_x', None) is not None:
-                    _w, _h = self.screen.get_size()
-                    cur_x = event.x * _w
-                    dx = cur_x - self._last_touch_x
-                    self._last_touch_x = cur_x
-                    new_x = self.kid.rect.centerx + int(dx)
-                    new_x = max(0, min(new_x, self.screen_rect.right))
-                    self.kid.rect.centerx = new_x
-            elif event.type in (pygame.FINGERUP, pygame.MOUSEBUTTONUP):
-                self._last_touch_x = None
+            # ── Touch movement: hold left/right side to move ──
+            if self.game_state == "playing" and not getattr(self, "quiz_active", False):
+                if event.type in (pygame.FINGERDOWN, pygame.MOUSEBUTTONDOWN):
+                    if event.type == pygame.FINGERDOWN:
+                        _w, _h = self.screen.get_size()
+                        touch_x = event.x * _w
+                    else:
+                        touch_x = event.pos[0]
+
+                    screen_w = self.screen.get_size()[0]
+                    if touch_x < screen_w / 2:
+                        self.kid.moving_left = True
+                        self.kid.moving_right = False
+                    else:
+                        self.kid.moving_right = True
+                        self.kid.moving_left = False
+
+                elif event.type in (pygame.FINGERUP, pygame.MOUSEBUTTONUP):
+                    self.kid.moving_left = False
+                    self.kid.moving_right = False
+
+
 
             # Standard keyboard / mouse flow during play
             if event.type == pygame.KEYDOWN:
@@ -1305,14 +1308,14 @@ class SuperKidsGame:
     def _check_quiz_click(self, event_or_pos):
         """Single source of truth for tap-or-click on quiz answers."""
         # Accept either an event with .pos or .x/.y or a tuple
-        if hasattr(event_or_pos, "pos") and event_or_pos.pos:
+        if hasattr(event_or_pos, "pos"):
             pos = event_or_pos.pos
         elif hasattr(event_or_pos, "x"):
             # FINGERDOWN event — x and y are normalised 0–1
             w, h = self.screen.get_size()
             pos = (int(event_or_pos.x * w), int(event_or_pos.y * h))
-        elif isinstance(event_or_pos, tuple):
-            pos = event_or_pos
+        elif isinstance(event_or_pos, (tuple, list)) and len(event_or_pos) == 2:
+            pos = tuple(event_or_pos)
         else:
             return  # unknown event, ignore
 
@@ -1320,10 +1323,14 @@ class SuperKidsGame:
             self._dismiss_quiz()
             return
 
+        if not hasattr(self, "_quiz_option_rects") or not self._quiz_option_rects:
+            return
+
         for i, rect in enumerate(self._quiz_option_rects):
             if rect.collidepoint(pos):
                 self._evaluate_quiz(i)
                 return
+
 
     def _check_quiz_keydown(self, event):
         if self.quiz_result is not None:
