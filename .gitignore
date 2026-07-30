@@ -5,3 +5,7 @@ build/
 __pycache__/
 *.pyc
 *.apk
+.DS_Store
+.idea/
+images/.DS_Store
+sounds/.DS_Store
